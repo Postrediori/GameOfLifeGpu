@@ -28,28 +28,6 @@ static const std::vector<std::tuple<std::string, int>> ModelSizes = {
     {"1024", 1024}
 };
 
-static GLuint InitTexture(GLenum format, GLsizei size) {
-    GLuint tex = 0;
-
-    glGenTextures(1, &tex); LOGOPENGLERROR();
-    if (!tex) {
-        LOGE << "Failed to init texture";
-        return 0;
-    }
-    glBindTexture(GL_TEXTURE_2D, tex); LOGOPENGLERROR();
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-        size, size,
-        0, format, GL_UNSIGNED_BYTE, nullptr); LOGOPENGLERROR();
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); LOGOPENGLERROR();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); LOGOPENGLERROR();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); LOGOPENGLERROR();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); LOGOPENGLERROR();
-
-    return tex;
-}
-
 LifeContext::~LifeContext() {
     Release();
 }
@@ -59,12 +37,12 @@ bool LifeContext::InitTextures(int newSize) {
 
     textureSize = newSize;
 
-    srcTexture = InitTexture(GL_RED, static_cast<GLsizei>(textureSize));
+    srcTexture = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
     if (!srcTexture) {
         return false;
     }
 
-    dstTexture = InitTexture(GL_RED, static_cast<GLsizei>(textureSize));
+    dstTexture = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
     if (!dstTexture) {
         return false;
     }

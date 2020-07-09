@@ -3,7 +3,11 @@
 #ifdef NDEBUG
 # define LOGOPENGLERROR()
 #else
-# define LOGOPENGLERROR() LogOpenGLError(__FILE__,__LINE__)
+# define LOGOPENGLERROR() GraphicsUtils::LogOpenGLError(__FILE__,__LINE__)
 #endif
 
-void LogOpenGLError(const char *file, int line);
+namespace GraphicsUtils {
+    void LogOpenGLError(const char *file, int line);
+
+    GLuint InitTexture(GLenum format, GLsizei size, GLenum filter, GLenum wrap);
+}
