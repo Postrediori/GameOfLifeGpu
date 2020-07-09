@@ -4,7 +4,18 @@
 #include "FrameBufferWrapper.h"
 #include "LifeContext.h"
 
+
 static const double UiWidth = 250.0;
+
+static const std::string BufferRendererVert = "data/life.vert";
+static const std::string BufferRendererFrag = "data/life.frag";
+
+static const std::string InitialDataVert = BufferRendererVert;
+static const std::string InitialDataFrag = "data/life-init.frag";
+
+static const std::string ScreenRendererVert = "data/screen-plane.vert";
+static const std::string ScreenRendererFrag = "data/screen-plane.frag";
+
 
 static const struct {
     double xmin, xmax, ymin, ymax;
@@ -16,128 +27,6 @@ static const std::vector<std::tuple<std::string, int>> ModelSizes = {
     {"512", 512},
     {"1024", 1024}
 };
-
-static const std::string BufferRendererVertSrc =
-    "#version 330 core\n"
-    "in vec2 coord;"
-    "in vec2 texCoord;"
-    "out vec2 fragTexCoord;"
-    "out vec2 fragRes;"
-    "uniform vec2 res;"
-    "uniform mat4 mvp;"
-    "void main(void) {"
-    "    fragTexCoord=texCoord;"
-    "    fragRes=res;"
-    "    gl_Position=vec4(coord,0.,1.);"
-    "}";
-
-static const std::string BufferRendererFragSrc =
-    "#version 330 core\n"
-
-    "in vec2 fragTexCoord;"
-    "in vec2 fragRes;"
-
-    "out vec4 outFragCol;"
-
-    "uniform sampler2D tex;"
-
-    "const float ActiveCell=1.;"
-    "const float InactiveCell=0.;"
-
-    "int getNeighbours(vec2 uv) {"
-    "    const vec2 dnb[8]=vec2[]("
-    "        vec2(-1.,1.), vec2(0.,1.), vec2(1.,1.),"
-    "        vec2(-1.,0.), vec2(1.,0.),"
-    "        vec2(-1.,-1.), vec2(0.,-1.), vec2(1.,-1.)"
-    "    );"
-    "    vec2 dxy=vec2(1./fragRes.x,1./fragRes.y);"
-
-    "    int k=0;"
-    "    for (int i=0; i<8; i++) {"
-    "        float nb=texture(tex,uv+dxy*dnb[i]).r;"
-    "        if(nb==ActiveCell){"
-    "            k++;"
-    "        }"
-    "    }"
-    "    return k;"
-    "}"
-
-    "float calcActivity(float c, int nb) {"
-    "    float nc=c;"
-    "    if (nc==ActiveCell) {"
-    "        if (nb<2 || nb>3) {"
-    "            nc=InactiveCell;"
-    "        }"
-    "    }"
-    "    else if (nc==InactiveCell) {"
-    "        if (nb==3) {"
-    "            nc=ActiveCell;"
-    "        }"
-    "    }"
-    "    return nc;"
-    "}"
-
-    "void main(void) {"
-    "    int k=getNeighbours(fragTexCoord);"
-
-    "    float c=texture(tex,fragTexCoord).r;"
-    "    c=calcActivity(c,k);"
-
-    "    outFragCol=vec4(c,0.,0.,1.);"
-    "}";
-
-static const std::string InitialDataVertSrc = BufferRendererVertSrc;
-static const std::string InitialDataFragSrc =
-    "#version 330 core\n"
-    "in vec2 fragTexCoord;"
-    "out vec4 outFragCol;"
-    "uniform sampler2D tex;"
-    "uniform float time;"
-    "const float ActiveCell=1.;"
-    "const float InactiveCell=0.;"
-    "float rand(vec2 crd) {"
-    "   return fract(sin(dot(crd.xy,vec2(12.9898,78.233))) * 43758.5453);"
-    "}"
-    "void main(void) {"
-    "    float c=rand(fragTexCoord+vec2(time,time)*0.002) > .5 ? ActiveCell : InactiveCell;"
-    "    outFragCol=vec4(c,0.,0.,1.);"
-    "}";
-
-
-static const std::string ScreenRendererVertSrc =
-    "#version 330 core\n"
-    "in vec2 coord;"
-    "in vec2 texCoord;"
-    "out vec2 fragTexCoord;"
-    "uniform vec2 res;"
-    "uniform mat4 mvp;"
-    "vec2 adjust_proportions(vec2 coord, vec2 res) {"
-    "    vec2 p=coord;"
-    "    if (res.x > res.y) {"
-    "        p.x *= res.y / res.x;"
-    "    } else {"
-    "        p.y *= res.x / res.y;"
-    "    }"
-    "    return p;"
-    "}"
-    "void main(void) {"
-    "    fragTexCoord=texCoord;"
-    "    vec2 p=adjust_proportions(coord,res);"
-    "    gl_Position=mvp*vec4(p,0.,1.);"
-    "}";
-
-static const std::string ScreenRendererFragSrc =
-    "#version 330 core\n"
-    "in vec2 fragTexCoord;"
-    "out vec4 outFragCol;"
-    "uniform sampler2D tex;"
-    "const vec4 c1=vec4(0.97,0.98,1.,1.);"
-    "const vec4 c2=vec4(0.03,0.19,0.48,1.);"
-    "void main(void) {"
-    "    float c=texture(tex,fragTexCoord).r;"
-    "    outFragCol=vec4((c2+c*(c1-c2)).rgb,1.);"
-    "}";
-
 
 static GLuint InitTexture(GLenum format, GLsizei size) {
     GLuint tex = 0;
@@ -202,7 +91,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     }
 
     // Init initial texture renderer
-    if (!bufferRenderer.Init(BufferRendererVertSrc, BufferRendererFragSrc)) {
+    if (!bufferRenderer.Init(BufferRendererVert, BufferRendererFrag)) {
         LOGE << "Failed to init texture renderer for frame buffer";
         return false;
     }
@@ -219,7 +108,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     frameBuffer.SetTexColorBuffer(dstTexture);
 
     // Init processed texture renderer
-    if (!screenRenderer.Init(ScreenRendererVertSrc, ScreenRendererFragSrc)) {
+    if (!screenRenderer.Init(ScreenRendererVert, ScreenRendererFrag)) {
         LOGE << "Failed to init processed texture renderer";
         return false;
     }
@@ -228,7 +117,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     screenRenderer.Resize(width, height);
 
     // Initial texture renderer
-    if (!initialBufferWriter.Init(InitialDataVertSrc, InitialDataFragSrc)) {
+    if (!initialBufferWriter.Init(InitialDataVert, InitialDataFrag)) {
         LOGE << "Unable to create initial buffer texture renderer";
         return false;
     }

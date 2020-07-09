@@ -24,11 +24,11 @@ PlanarTextureRenderer::~PlanarTextureRenderer() {
     Release();
 }
 
-bool PlanarTextureRenderer::Init(const std::string& vertexSrc, const std::string& fragmentSrc) {
+bool PlanarTextureRenderer::Init(const std::string& vertexFileName, const std::string& fragmentFileName) {
     mvp = glm::ortho(PlaneBounds.xmin, PlaneBounds.xmax, PlaneBounds.ymin, PlaneBounds.ymax);
 
     // Init shader program
-    if (!Shader::createProgramSource(program, vertexSrc, fragmentSrc)) {
+    if (!Shader::createProgram(program, vertexFileName, fragmentFileName)) {
         LOGE << "Failed to init shader program for planar texture";
         return false;
     }
@@ -106,9 +106,9 @@ void PlanarTextureRenderer::Release() {
     vbo = 0;
 }
 
-void PlanarTextureRenderer::Resize(int w, int h) {
-    width = w;
-    height = h;
+void PlanarTextureRenderer::Resize(int newWidth, int newHeight) {
+    width = newWidth;
+    height = newHeight;
 }
 
 void PlanarTextureRenderer::Render(bool ajdustViewport) {

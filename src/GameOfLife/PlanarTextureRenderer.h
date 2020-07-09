@@ -4,9 +4,9 @@ class PlanarTextureRenderer {
 public:
     ~PlanarTextureRenderer();
 
-    bool Init(const std::string& vertexSrc, const std::string& fragmentSrc);
+    bool Init(const std::string& vertexFileName, const std::string& fragmentFileName);
     void Release();
-    void Resize(int w, int h);
+    void Resize(int newWidth, int newHeight);
     void Render(bool adjustViewport);
 
     void SetTexture(GLuint t);
