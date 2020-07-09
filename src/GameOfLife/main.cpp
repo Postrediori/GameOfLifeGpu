@@ -68,6 +68,23 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
+    // Setup ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr; // Disable .ini
+
+    static const std::string gGlslVersion = "#version 330 core";
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(gGlslVersion.c_str());
+
+    ScopeGuard imGuiContextGuard([]() {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        LOGD << "Cleanup : ImGui";
+    });
+
+    // Setup program objects
     LifeContext context;
     if (!context.Init(Width, Height, TextureSize)) {
         LOGE << "Initialization failed";
@@ -76,12 +93,22 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwSetWindowUserPointer(window, static_cast<void *>(&context));
 
     while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+
+        // Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
         context.Display();
+
+        // Render ImGui
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         context.Update();
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     return EXIT_SUCCESS;

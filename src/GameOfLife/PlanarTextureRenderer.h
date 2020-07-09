@@ -5,14 +5,13 @@ public:
     ~PlanarTextureRenderer();
 
     bool Init(const std::string& vertexSrc, const std::string& fragmentSrc);
+    void Release();
+    void Resize(int w, int h);
+    void Render(bool adjustViewport);
+
     void SetTexture(GLuint t);
     void SetTime(double t);
-
-    void Release();
-
-    void Resize(int w, int h);
-
-    void Render();
+    void SetMvp(glm::mat4 mvp);
 
 private:
     int width = 0, height = 0;

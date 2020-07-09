@@ -91,6 +91,10 @@ void PlanarTextureRenderer::SetTime(double t) {
     time = t;
 }
 
+void PlanarTextureRenderer::SetMvp(glm::mat4 newMvp) {
+    mvp = newMvp;
+}
+
 void PlanarTextureRenderer::Release() {
     glDeleteProgram(program); LOGOPENGLERROR();
     program = 0;
@@ -107,13 +111,15 @@ void PlanarTextureRenderer::Resize(int w, int h) {
     height = h;
 }
 
-void PlanarTextureRenderer::Render() {
+void PlanarTextureRenderer::Render(bool ajdustViewport) {
     if (!texture) {
         // Nothing to render
         return;
     }
 
-    glViewport(0, 0, width, height); LOGOPENGLERROR();
+    if (ajdustViewport) {
+        glViewport(0, 0, width, height); LOGOPENGLERROR();
+    }
 
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();

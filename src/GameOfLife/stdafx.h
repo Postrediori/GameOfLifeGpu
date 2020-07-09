@@ -11,6 +11,11 @@
 #include <glm/ext/matrix_clip_space.hpp> // glm::ortho
 #include <glm/gtc/type_ptr.hpp> // glm::value_ptr
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include <string>
 #include <vector>
 #include <functional>
+#include <tuple>

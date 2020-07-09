@@ -4,6 +4,18 @@
 #include "FrameBufferWrapper.h"
 #include "LifeContext.h"
 
+static const double UiWidth = 250.0;
+
+static const struct {
+    double xmin, xmax, ymin, ymax;
+} ScreenArea = { -1.0, 1.0, -1.0, 1.0 };
+
+static const std::vector<std::tuple<std::string, int>> ModelSizes = {
+    {"128", 128},
+    {"256", 256},
+    {"512", 512},
+    {"1024", 1024}
+};
 
 static const std::string BufferRendererVertSrc =
     "#version 330 core\n"
@@ -119,8 +131,8 @@ static const std::string ScreenRendererFragSrc =
     "in vec2 fragTexCoord;"
     "out vec4 outFragCol;"
     "uniform sampler2D tex;"
-    "const vec4 c1=vec4(0.97, 0.98, 1., 1.);"
-    "const vec4 c2=vec4(0.03, 0.19, 0.48, 1.);"
+    "const vec4 c1=vec4(0.97,0.98,1.,1.);"
+    "const vec4 c2=vec4(0.03,0.19,0.48,1.);"
     "void main(void) {"
     "    float c=texture(tex,fragTexCoord).r;"
     "    outFragCol=vec4((c2+c*(c1-c2)).rgb,1.);"
@@ -153,7 +165,11 @@ LifeContext::~LifeContext() {
     Release();
 }
 
-bool LifeContext::InitTextures() {
+bool LifeContext::InitTextures(int newSize) {
+    Release();
+
+    textureSize = newSize;
+
     srcTexture = InitTexture(GL_RED, static_cast<GLsizei>(textureSize));
     if (!srcTexture) {
         return false;
@@ -167,16 +183,20 @@ bool LifeContext::InitTextures() {
     return true;
 }
 
-bool LifeContext::Init(int width, int height, int texSize) {
+bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     LOGI << "OpenGL Renderer : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    textureSize = texSize;
+    // Setup of ImGui visual style
+    ImGui::StyleColorsLight();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 0.0f;
+    style.WindowBorderSize = 0.0f;
 
     // Init textures
-    if (!InitTextures()) {
+    if (!InitTextures(texSize)) {
         LOGE << "Failed to init textures";
         return false;
     }
@@ -208,52 +228,98 @@ bool LifeContext::Init(int width, int height, int texSize) {
     screenRenderer.Resize(width, height);
 
     // Initial texture renderer
-    if (!InitWithRandomData(glfwGetTime())) {
+    if (!initialBufferWriter.Init(InitialDataVertSrc, InitialDataFragSrc)) {
         LOGE << "Unable to create initial buffer texture renderer";
         return false;
     }
+
+    NeedDataInit();
 
     // Setup OpenGL flags
     glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
     glClearDepth(1.0); LOGOPENGLERROR();
 
+    Reshape(newWidth, newHeight);
+
     return true;
 }
 
-bool LifeContext::InitWithRandomData(double seed) {
-    PlanarTextureRenderer initialBufferWriter;
-    if (!initialBufferWriter.Init(InitialDataVertSrc, InitialDataFragSrc)) {
-        return false;
-    }
+void LifeContext::InitWithRandomData() {
+    generationCounter = 0;
+
     initialBufferWriter.SetTexture(dstTexture);
     initialBufferWriter.Resize(textureSize, textureSize);
-    initialBufferWriter.SetTime(seed);
+    initialBufferWriter.SetTime(glfwGetTime());
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
-    initialBufferWriter.Render();
+    initialBufferWriter.Render(true);
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
-
-    SwapTextures();
 }
 
-void LifeContext::Reshape(int width, int height) {
-    screenRenderer.Resize(width, height);
+void LifeContext::SetModelSize(int newSize) {
+    InitTextures(newSize);
+
+    bufferRenderer.SetTexture(srcTexture);
+    frameBuffer.SetTexColorBuffer(dstTexture);
+
+    bufferRenderer.Resize(textureSize, textureSize);
+
+    NeedDataInit();
+}
+
+void LifeContext::Reshape(int newWidth, int newHeight) {
+    width = newWidth;
+    height = newHeight;
+
+    double widthWithoutUi = width - UiWidth;
+    double newScale = 2.0 / (double)(widthWithoutUi);
+    double newXMin = ScreenArea.xmin - UiWidth * newScale;
+    glm::mat4 screenMvp = glm::ortho(newXMin, ScreenArea.xmax, ScreenArea.ymin, ScreenArea.ymax);
+
+    screenRenderer.Resize(widthWithoutUi, height);
+    screenRenderer.SetMvp(screenMvp);
 }
 
 void LifeContext::Release() {
-    glDeleteTextures(1, &srcTexture);
-    glDeleteTextures(1, &dstTexture);
+    if (srcTexture) {
+        glDeleteTextures(1, &srcTexture);
+        srcTexture = 0;
+    }
+    if (dstTexture) {
+        glDeleteTextures(1, &dstTexture);
+        srcTexture = 0;
+    }
 }
 
 void LifeContext::Update() {
+    static int gensCounter = 0;
+
+    static double lastTime = 0.0;
+    static double lastFpsTime = 0.0;
+    double currentTime = glfwGetTime();
+    
+    // Update FPS counter every second
+    if (currentTime - lastFpsTime > 1.0) {
+        gensPerSec = gensCounter;
+        fps = ImGui::GetIO().Framerate;
+        lastFpsTime = currentTime;
+        gensCounter = 0;
+    }
+
+    if (needDataInit) {
+        InitWithRandomData();
+        needDataInit = false;
+    }
+
+    // Move to the next generation
     SwapTextures();
+    gensCounter++;
+    generationCounter++;
 }
 
 void LifeContext::SwapTextures() {
-    GLuint temp = 0;
-
     // Swap IDs
-    temp = dstTexture;
+    GLuint temp = dstTexture;
     dstTexture = srcTexture;
     srcTexture = temp;
 
@@ -270,12 +336,58 @@ void LifeContext::Display() {
     // Render to fixed-size framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
 
-    bufferRenderer.Render();
+    bufferRenderer.Render(true);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
     // Render to screen
-    screenRenderer.Render();
+    glViewport(0, 0, width, height);
+    screenRenderer.Render(false);
+
+    DisplayUi();
+}
+
+void LifeContext::DisplayUi() {
+    ImVec2 uiSize = ImVec2(UiWidth, height);
+
+    ImGui::SetNextWindowPos(ImVec2(0.0, 0.0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(uiSize, ImGuiCond_Always);
+
+    ImGui::Begin("Game of Life", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+    ImGui::Text("Game of Life");
+
+    ImGui::Separator();
+
+    int gModelSize = textureSize;
+    ImGui::Text("Model size:");
+    for (auto it = ModelSizes.begin(); it != ModelSizes.end(); it++) {
+        const auto& s = *it;
+        if (ImGui::RadioButton(std::get<0>(s).c_str(), &gModelSize, std::get<1>(s))) {
+            SetModelSize(gModelSize);
+        }
+        if (it != std::prev(ModelSizes.end())) {
+            ImGui::SameLine();
+        }
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text("User Guide:");
+    ImGui::BulletText("F1 to on/off fullscreen mode.");
+    ImGui::BulletText("RMB/Space to Clear model.");
+
+    ImGui::Separator();
+
+    ImGui::Text("Generation no.: %d", generationCounter);
+    ImGui::Text("Gens/sec: %.1f", gensPerSec);
+
+    ImGui::Separator();
+
+    ImGui::Text("FPS Counter : %.1f", fps);
+
+    ImGui::End();
 }
 
 void LifeContext::Reshape(GLFWwindow* window, int width, int height) {
@@ -318,7 +430,23 @@ void LifeContext::Keyboard(GLFWwindow* window, int key, int /*scancode*/, int ac
             break;
 
         case GLFW_KEY_SPACE:
-            context->InitWithRandomData(glfwGetTime());
+            context->NeedDataInit();
+            break;
+
+        case GLFW_KEY_1:
+            context->SetModelSize(std::get<1>(ModelSizes[0]));
+            break;
+
+        case GLFW_KEY_2:
+            context->SetModelSize(std::get<1>(ModelSizes[1]));
+            break;
+
+        case GLFW_KEY_3:
+            context->SetModelSize(std::get<1>(ModelSizes[2]));
+            break;
+
+        case GLFW_KEY_4:
+            context->SetModelSize(std::get<1>(ModelSizes[3]));
             break;
         }
     }
@@ -330,7 +458,7 @@ void LifeContext::Mouse(GLFWwindow* window, int button, int action, int /*mods*/
 
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_2) {
-            context->InitWithRandomData(glfwGetTime());
+            context->NeedDataInit();
         }
     }
 }
