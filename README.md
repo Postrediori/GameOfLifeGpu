@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project uses GPU to evaluate Conay's Game of Life. The calculations of the next generaion of the cellular autamata are made with the fragment shader and the evaluation result is caught with frame buffers.
+This project uses GPU to evaluate cellular automata of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life). The calculations of the next generaion of the cellular autamata are made with the fragment shader and the evaluation result is caught with frame buffers.
 
 ![Screenshot on Windows](images/GameOfLifeWin2.png)
 
