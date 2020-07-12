@@ -137,7 +137,7 @@ An `GameOfLifeGpu` application bundle will now be present under `<Source directo
 
 ## TODO
 
-* [*] Build instructions
+* [x] Build instructions
 * [ ] Optimization of generation algorithm (mark cells that were changed or may be changed)
 * [ ] Capture screenshots&animation
 * [ ] Edit cellular automata rules
