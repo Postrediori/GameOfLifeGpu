@@ -162,14 +162,13 @@ void LifeContext::Update() {
     static int gensCounter = 0;
 
     static double lastTime = 0.0;
-    static double lastFpsTime = 0.0;
     double currentTime = glfwGetTime();
-    
+
     // Update FPS counter every second
-    if (currentTime - lastFpsTime > 1.0) {
+    if (currentTime - lastTime > 1.0) {
         gensPerSec = gensCounter;
         fps = ImGui::GetIO().Framerate;
-        lastFpsTime = currentTime;
+        lastTime = currentTime;
         gensCounter = 0;
     }
 

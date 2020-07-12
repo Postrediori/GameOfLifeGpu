@@ -11,7 +11,7 @@ const float InactiveCell=0.;
 
 int getNeighbours(vec2 uv) {
     const int NBCount = 8;
-    const vec2 dnb[NCount]=vec2[](
+    const vec2 dnb[NBCount]=vec2[](
         vec2(-1.,1.), vec2(0.,1.), vec2(1.,1.),
         vec2(-1.,0.), vec2(1.,0.),
         vec2(-1.,-1.), vec2(0.,-1.), vec2(1.,-1.)
