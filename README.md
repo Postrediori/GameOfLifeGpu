@@ -7,7 +7,8 @@ This project uses GPU to evaluate cellular automata of [Conway's Game of Life](h
 
 ## Screenshots
 
-![Screenshot on Windows](images/GameOfLifeWin2.png)
+![Screenshot on Windows](images/GameOfLifeWin3.png)
+![Screenshot on Windows](images/GameOfLifeWin4.png)
 ![Screenshot on macOS](images/GameOfLifeMacOs.png)
 
 
