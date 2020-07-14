@@ -12,6 +12,7 @@ public:
     void SetTexture(GLuint t);
     void SetTime(double t);
     void SetMvp(glm::mat4 mvp);
+    GLuint GetProgram() const { return program; }
 
 private:
     int width = 0, height = 0;

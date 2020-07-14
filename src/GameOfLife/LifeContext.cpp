@@ -28,6 +28,27 @@ static const std::vector<std::tuple<std::string, int>> ModelSizes = {
     {"1024", 1024}
 };
 
+static const std::vector<std::tuple<std::string, std::string, AutomatonRules>> AutomatonRules = {
+    {"Game of Life", "B3/S23", {8, 12}},
+    {"High Life", "B36/S23", {72, 12}},
+    {"Assimilation", "B345/S4567", {56, 240}},
+    {"Day and Night", "B3678/S34678", {456, 472}},
+    //{"Amoeba", "B357/S1358", {168, 298}}, // <-- White noise
+    {"Move", "B368/S245", {328, 52}},
+    {"Pseudo Life", "B357/S238", {168, 268}},
+    //{"Diamoeba", "B35678/S5678", {488, 480}}, // <-- Captures all texture
+    //{"34", "B34/S34", {24, 24}}, // ---
+    //{"Long Life", "B345/S5", {56, 32}}, // <-- White noise
+    {"Stains", "B3678/S235678", {456, 492}},
+    //{"Seeds", "B2/S", {4, 0}}, // <-- White noise
+    {"Maze", "B3/S12345", {8, 62}},
+    {"Coagulations", "B378/S235678", {392, 492}}, // <-- Captures all texture
+    //{"Walled cities", "B45678/S2345", {496, 60}}, // <-- White noise
+    //{"Gnarl", "B1/S1", {1, 1}}, // <-- White noise
+    //{"Replicator", "B1357/S1357", {170, 170}}, // <-- White noise
+    {"Mystery", "B3458/S05678", {312, 481}},
+};
+
 LifeContext::~LifeContext() {
     Release();
 }
@@ -62,6 +83,9 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     style.WindowRounding = 0.0f;
     style.WindowBorderSize = 0.0f;
 
+    // Init default rules
+    currentRules = std::get<2>(AutomatonRules[0]);
+
     // Init textures
     if (!InitTextures(texSize)) {
         LOGE << "Failed to init textures";
@@ -73,6 +97,10 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
         LOGE << "Failed to init texture renderer for frame buffer";
         return false;
     }
+
+    bufferRendererProgram = bufferRenderer.GetProgram();
+    bufferRendererRulesBecame = glGetUniformLocation(bufferRendererProgram, "rules.became");
+    bufferRendererRulesStay = glGetUniformLocation(bufferRendererProgram, "rules.stay");
 
     bufferRenderer.SetTexture(srcTexture);
     bufferRenderer.Resize(textureSize, textureSize);
@@ -202,6 +230,10 @@ void LifeContext::Display() {
     // Render to fixed-size framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
 
+    glUseProgram(bufferRendererProgram);
+    glUniform1i(bufferRendererRulesBecame, currentRules.became);
+    glUniform1i(bufferRendererRulesStay, currentRules.stay);
+
     bufferRenderer.Render(true);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
@@ -236,6 +268,22 @@ void LifeContext::DisplayUi() {
         if (it != std::prev(ModelSizes.end())) {
             ImGui::SameLine();
         }
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text("Cellular Automaton Rules:");
+
+    static int selectedRule = 0;
+    for (int i = 0; i < AutomatonRules.size(); i++) {
+        const auto& r = AutomatonRules[i];
+        if (ImGui::Selectable(std::get<0>(r).c_str(), selectedRule == i)) {
+            selectedRule = i;
+
+            currentRules = std::get<2>(r);
+            NeedDataInit();
+        }
+        ImGui::SameLine(150); ImGui::Text(std::get<1>(r).c_str());
     }
 
     ImGui::Separator();

@@ -1,5 +1,10 @@
 #pragma once
 
+struct AutomatonRules {
+    int became;
+    int stay;
+};
+
 class LifeContext {
 public:
     ~LifeContext();
@@ -39,6 +44,8 @@ private:
     GLuint srcTexture = 0;
     GLuint dstTexture = 0;
 
+    GLuint bufferRendererProgram = 0;
+    GLint bufferRendererRulesBecame = -1, bufferRendererRulesStay = -1;
     PlanarTextureRenderer bufferRenderer;
     PlanarTextureRenderer initialBufferWriter;
     FrameBufferWrapper frameBuffer;
@@ -46,4 +53,6 @@ private:
     PlanarTextureRenderer screenRenderer;
 
     bool needDataInit = false;
+
+    AutomatonRules currentRules;
 };

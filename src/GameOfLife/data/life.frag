@@ -6,18 +6,15 @@ out vec4 outFragCol;
 
 uniform sampler2D tex;
 
-const float ActiveCell=1.;
-const float InactiveCell=0.;
-
-struct Rules {
+struct GameRules {
     int became;
     int stay;
 };
 
-const Rules GameRules = {
-    8, // became=00001000 - 3
-    12 // stay=00001100 - 3&2
-};
+uniform GameRules rules;
+
+const float ActiveCell=1.;
+const float InactiveCell=0.;
 
 // Check that n-th bit of b is set
 bool isBitSet(int b, int n) {
@@ -45,11 +42,11 @@ int getNeighbours(vec2 uv) {
 }
 
 bool ruleBegin(int nb) {
-    return isBitSet(GameRules.became, nb);
+    return isBitSet(rules.became, nb);
 }
 
 bool ruleStay(int nb) {
-    return isBitSet(GameRules.stay, nb);
+    return isBitSet(rules.stay, nb);
 }
 
 float calcActivity(float c, int nb) {
