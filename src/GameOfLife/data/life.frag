@@ -9,6 +9,21 @@ uniform sampler2D tex;
 const float ActiveCell=1.;
 const float InactiveCell=0.;
 
+struct Rules {
+    int became;
+    int stay;
+};
+
+const Rules GameRules = {
+    8, // became=00001000 - 3
+    12 // stay=00001100 - 3&2
+};
+
+// Check that n-th bit of b is set
+bool isBitSet(int b, int n) {
+    return ((b / (1 << n)) % 2==1);
+}
+
 int getNeighbours(vec2 uv) {
     const int NBCount = 8;
     const vec2 dnb[NBCount]=vec2[](
@@ -30,11 +45,11 @@ int getNeighbours(vec2 uv) {
 }
 
 bool ruleBegin(int nb) {
-    return (nb == 3);
+    return isBitSet(GameRules.became, nb);
 }
 
 bool ruleStay(int nb) {
-    return (nb == 2 || nb == 3);
+    return isBitSet(GameRules.stay, nb);
 }
 
 float calcActivity(float c, int nb) {
