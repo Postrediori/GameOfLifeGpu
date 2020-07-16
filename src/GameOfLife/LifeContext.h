@@ -8,8 +8,9 @@ namespace CellularAutomata {
     };
 
     enum class InitialRandomType {
-        RadialRandom = 0,
+        EmptyInit = 0,
         UniformRandom = 1,
+        RadialRandom = 2,
     };
 }
 
@@ -56,15 +57,14 @@ private:
     GLuint dstTexture = 0;
 
     GLuint automataProgram = 0;
-    GLuint automataRadialInitProgram = 0;
-    GLuint automataRandomInitProgram = 0;
+    GLuint automataInitProgram = 0;
 
     GLint autotamaRulesBecameUniform = -1;
     GLint autotamaRulesStayUniform = -1;
+    GLint autotamaInitTypeUniform = -1;
 
     PlanarTextureRenderer automataRenderer;
-    PlanarTextureRenderer automataRadialInitialRenderer;
-    PlanarTextureRenderer automataRandomInitialRenderer;
+    PlanarTextureRenderer automataInitialRenderer;
     FrameBufferWrapper frameBuffer;
 
     GLuint screenProgram = 0;

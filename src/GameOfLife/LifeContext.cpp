@@ -11,11 +11,8 @@ static const double UiWidth = 250.0;
 static const std::string BufferRendererVert = "data/life.vert";
 static const std::string BufferRendererFrag = "data/life.frag";
 
-static const std::string RadialInitialDataVert = BufferRendererVert;
-static const std::string RadialInitialDataFrag = "data/life-radial-init.frag";
-
-static const std::string RandomInitialDataVert = BufferRendererVert;
-static const std::string RandomInitialDataFrag = "data/life-random-init.frag";
+static const std::string InitialDataVert = BufferRendererVert;
+static const std::string InitialDataFrag = "data/life-init.frag";
 
 static const std::string ScreenRendererVert = "data/screen-plane.vert";
 static const std::string ScreenRendererFrag = "data/screen-plane.frag";
@@ -113,11 +110,12 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     autotamaRulesBecameUniform = glGetUniformLocation(automataProgram, "rules.became");
     autotamaRulesStayUniform = glGetUniformLocation(automataProgram, "rules.stay");
 
-    if (!Shader::createProgram(automataRadialInitProgram, RadialInitialDataVert, RadialInitialDataFrag) ||
-        !Shader::createProgram(automataRandomInitProgram, RandomInitialDataVert, RandomInitialDataFrag)) {
+    if (!Shader::createProgram(automataInitProgram, InitialDataVert, InitialDataFrag)) {
         LOGE << "Failed to init shader program for initial state of cellular automata";
         return false;
     }
+
+    autotamaInitTypeUniform = glGetUniformLocation(automataInitProgram, "initType"); LOGOPENGLERROR();
 
     if (!Shader::createProgram(screenProgram, ScreenRendererVert, ScreenRendererFrag)) {
         LOGE << "Failed to init shader program for screen rendering";
@@ -134,8 +132,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     automataRenderer.Resize(textureSize, textureSize);
 
     // Setup initial automata renderer
-    if (!automataRandomInitialRenderer.Init(automataRandomInitProgram) ||
-        !automataRadialInitialRenderer.Init(automataRadialInitProgram)) {
+    if (!automataInitialRenderer.Init(automataInitProgram)) {
         LOGE << "Failed to setup initial cellular automata data creator";
         return false;
     }
@@ -171,18 +168,17 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
 
 void LifeContext::InitWithRandomData() {
     generationCounter = 0;
+    
+    automataInitialRenderer.SetTexture(dstTexture);
+    automataInitialRenderer.Resize(textureSize, textureSize);
+    automataInitialRenderer.SetTime(glfwGetTime());
 
-    PlanarTextureRenderer& initialRenderer =
-        (initialRandomType == CellularAutomata::InitialRandomType::UniformRandom) ?
-        automataRandomInitialRenderer : automataRadialInitialRenderer;
-
-    initialRenderer.SetTexture(dstTexture);
-    initialRenderer.Resize(textureSize, textureSize);
-    initialRenderer.SetTime(glfwGetTime());
+    glUseProgram(automataInitProgram); LOGOPENGLERROR();
+    glUniform1i(autotamaInitTypeUniform, static_cast<int>(initialRandomType)); LOGOPENGLERROR();
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
-    initialRenderer.AdjustViewport();
-    initialRenderer.Render();
+    automataInitialRenderer.AdjustViewport();
+    automataInitialRenderer.Render();
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 }
 
@@ -224,16 +220,12 @@ void LifeContext::Release() {
     ReleaseTextures();
 
     if (automataProgram) {
-        glDeleteProgram(automataProgram);
+        glDeleteProgram(automataProgram); LOGOPENGLERROR();
         automataProgram = 0;
     }
-    if (automataRadialInitProgram) {
-        glDeleteProgram(automataRadialInitProgram);
-        automataRadialInitProgram = 0;
-    }
-    if (automataRandomInitProgram) {
-        glDeleteProgram(automataRandomInitProgram);
-        automataRandomInitProgram = 0;
+    if (automataInitProgram) {
+        glDeleteProgram(automataInitProgram); LOGOPENGLERROR();
+        automataInitProgram = 0;
     }
 }
 
