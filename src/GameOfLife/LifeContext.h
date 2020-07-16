@@ -30,6 +30,7 @@ public:
 
 private:
     bool InitTextures(int newSize);
+    void ReleaseTextures();
     void Release();
 
     void SwapTextures();

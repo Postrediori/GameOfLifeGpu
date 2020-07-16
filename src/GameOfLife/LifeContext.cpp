@@ -65,7 +65,7 @@ LifeContext::~LifeContext() {
 }
 
 bool LifeContext::InitTextures(int newSize) {
-    Release();
+    ReleaseTextures();
 
     textureSize = newSize;
 
@@ -210,6 +210,23 @@ void LifeContext::Reshape(int newWidth, int newHeight) {
 }
 
 void LifeContext::Release() {
+    ReleaseTextures();
+
+    if (automataProgram) {
+        glDeleteProgram(automataProgram);
+        automataProgram = 0;
+    }
+    if (automataRadialInitProgram) {
+        glDeleteProgram(automataRadialInitProgram);
+        automataRadialInitProgram = 0;
+    }
+    if (automataRandomInitProgram) {
+        glDeleteProgram(automataRandomInitProgram);
+        automataRandomInitProgram = 0;
+    }
+}
+
+void LifeContext::ReleaseTextures() {
     if (srcTexture) {
         glDeleteTextures(1, &srcTexture);
         srcTexture = 0;

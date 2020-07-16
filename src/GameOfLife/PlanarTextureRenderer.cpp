@@ -92,9 +92,6 @@ void PlanarTextureRenderer::SetMvp(glm::mat4 newMvp) {
 }
 
 void PlanarTextureRenderer::Release() {
-    glDeleteProgram(program); LOGOPENGLERROR();
-    program = 0;
-
     glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
     vao = 0;
 
