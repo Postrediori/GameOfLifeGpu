@@ -13,6 +13,10 @@ struct GameRules {
 
 uniform GameRules rules;
 
+uniform bool needSetActivity;
+uniform vec2 activityPos;
+const float ActivityRadius = 0.05;
+
 const float ActiveCell=1.;
 const float InactiveCell=0.;
 
@@ -64,10 +68,16 @@ float calcActivity(float c, int nb) {
 }
 
 void main(void) {
-    int k=getNeighbours(fragTexCoord);
+    vec2 uv = fragTexCoord;
 
-    float c=texture(tex,fragTexCoord).r;
+    int k=getNeighbours(uv);
+
+    float c=texture(tex,uv).r;
     c=calcActivity(c,k);
+
+    if (needSetActivity && length(uv-activityPos)<ActivityRadius) {
+        c=ActiveCell;
+    }
 
     outFragCol=vec4(c,0.,0.,1.);
 }

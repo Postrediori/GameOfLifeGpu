@@ -64,6 +64,7 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwSetWindowSizeCallback(window, LifeContext::Reshape);
 
     glfwSetMouseButtonCallback(window, LifeContext::Mouse);
+    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 
     glfwMakeContextCurrent(window);
     gladLoadGL();
@@ -107,6 +108,15 @@ int main(int /*argc*/, char** /*argv*/) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         context.Update();
+        {
+            int status = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1);
+            if (status == GLFW_PRESS) {
+                double x = 0.0, y = 0.0;
+                glfwGetCursorPos(window, &x, &y);
+
+                context.MouseDown(x, y);
+            }
+        }
 
         glfwSwapBuffers(window);
     }

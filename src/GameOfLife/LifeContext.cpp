@@ -53,6 +53,7 @@ static const std::vector<CellularAutomataRules> AutomatonRules = {
 };
 
 static const std::vector<std::tuple<std::string, CellularAutomata::InitialRandomType>> InitialRandomTypes = {
+    {"Empty / Manual draw", CellularAutomata::InitialRandomType::EmptyInit},
     {"Radial Random", CellularAutomata::InitialRandomType::RadialRandom},
     {"Uniform Random", CellularAutomata::InitialRandomType::UniformRandom},
 };
@@ -288,6 +289,18 @@ void LifeContext::Display() {
     glUniform1i(autotamaRulesBecameUniform, currentRules.became); LOGOPENGLERROR();
     glUniform1i(autotamaRulesStayUniform, currentRules.stay); LOGOPENGLERROR();
 
+    GLuint uNeedSetActivity = glGetUniformLocation(automataProgram, "needSetActivity");
+    if (needSetActivity) {
+        GLint uActivityPos = glGetUniformLocation(automataProgram, "activityPos");
+
+        glUniform1i(uNeedSetActivity, 1);
+        glUniform2fv(uActivityPos, 1, glm::value_ptr(activityPos));
+        needSetActivity = false;
+    }
+    else {
+        glUniform1i(uNeedSetActivity, 0);
+    }
+
     automataRenderer.AdjustViewport();
     automataRenderer.Render();
 
@@ -376,6 +389,43 @@ void LifeContext::DisplayUi() {
     ImGui::Text("FPS Counter : %.1f", fps);
 
     ImGui::End();
+}
+
+void LifeContext::MouseDown(int x, int y) {
+    if (initialRandomType != CellularAutomata::InitialRandomType::EmptyInit) {
+        return;
+    }
+
+    int newX = x - UiWidth;
+
+    int w = this->width - UiWidth;
+    int h = this->height;
+
+    int cx = 0, cy = 0;
+    if (w > h) {
+        cx = newX - (w - h) / 2;
+        cy = y;
+    }
+    else {
+        cx = newX;
+        cy = y - (h - w) / 2;
+    }
+
+    int size = (w > h) ? h : w;
+
+    if (!(cx<0 || cy<0 || cx>size || cy>size)) {
+        float s = (float)cx / (float)size;
+        float t = 1.f - (float)cy / (float)size;
+
+        this->SetActivity(glm::vec2(s, t));
+
+        LOGI << "Set Activity at [" << s << "," << t << "]";
+    }
+}
+
+void LifeContext::SetActivity(const glm::vec2& pos) {
+    needSetActivity = true;
+    activityPos = pos;
 }
 
 void LifeContext::Reshape(GLFWwindow* window, int width, int height) {
