@@ -7,7 +7,9 @@ public:
     bool Init(GLuint program);
     void Release();
     void Resize(int newWidth, int newHeight);
-    void Render(bool adjustViewport);
+    void Render();
+
+    void AdjustViewport();
 
     void SetTexture(GLuint t);
     void SetTime(double t);

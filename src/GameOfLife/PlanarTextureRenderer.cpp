@@ -104,14 +104,14 @@ void PlanarTextureRenderer::Resize(int newWidth, int newHeight) {
     height = newHeight;
 }
 
-void PlanarTextureRenderer::Render(bool ajdustViewport) {
+void PlanarTextureRenderer::AdjustViewport() {
+    glViewport(0, 0, width, height); LOGOPENGLERROR();
+}
+
+void PlanarTextureRenderer::Render() {
     if (!texture) {
         // Nothing to render
         return;
-    }
-
-    if (ajdustViewport) {
-        glViewport(0, 0, width, height); LOGOPENGLERROR();
     }
 
     glUseProgram(program); LOGOPENGLERROR();

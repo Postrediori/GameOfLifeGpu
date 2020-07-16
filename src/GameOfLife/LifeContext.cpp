@@ -181,7 +181,8 @@ void LifeContext::InitWithRandomData() {
     initialRenderer.SetTime(glfwGetTime());
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
-    initialRenderer.Render(true);
+    initialRenderer.AdjustViewport();
+    initialRenderer.Render();
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 }
 
@@ -285,13 +286,14 @@ void LifeContext::Display() {
     glUniform1i(autotamaRulesBecameUniform, currentRules.became);
     glUniform1i(autotamaRulesStayUniform, currentRules.stay);
 
-    automataRenderer.Render(true);
+    automataRenderer.AdjustViewport();
+    automataRenderer.Render();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
     // Render to screen
     glViewport(0, 0, width, height);
-    screenRenderer.Render(false);
+    screenRenderer.Render();
 
     DisplayUi();
 }
