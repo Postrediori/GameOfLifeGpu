@@ -107,8 +107,8 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
         return false;
     }
 
-    autotamaRulesBecameUniform = glGetUniformLocation(automataProgram, "rules.became");
-    autotamaRulesStayUniform = glGetUniformLocation(automataProgram, "rules.stay");
+    autotamaRulesBecameUniform = glGetUniformLocation(automataProgram, "rules.became"); LOGOPENGLERROR();
+    autotamaRulesStayUniform = glGetUniformLocation(automataProgram, "rules.stay"); LOGOPENGLERROR();
 
     if (!Shader::createProgram(automataInitProgram, InitialDataVert, InitialDataFrag)) {
         LOGE << "Failed to init shader program for initial state of cellular automata";
@@ -231,11 +231,11 @@ void LifeContext::Release() {
 
 void LifeContext::ReleaseTextures() {
     if (srcTexture) {
-        glDeleteTextures(1, &srcTexture);
+        glDeleteTextures(1, &srcTexture); LOGOPENGLERROR();
         srcTexture = 0;
     }
     if (dstTexture) {
-        glDeleteTextures(1, &dstTexture);
+        glDeleteTextures(1, &dstTexture); LOGOPENGLERROR();
         srcTexture = 0;
     }
 }
@@ -284,9 +284,9 @@ void LifeContext::Display() {
     // Render to fixed-size framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
 
-    glUseProgram(automataProgram);
-    glUniform1i(autotamaRulesBecameUniform, currentRules.became);
-    glUniform1i(autotamaRulesStayUniform, currentRules.stay);
+    glUseProgram(automataProgram); LOGOPENGLERROR();
+    glUniform1i(autotamaRulesBecameUniform, currentRules.became); LOGOPENGLERROR();
+    glUniform1i(autotamaRulesStayUniform, currentRules.stay); LOGOPENGLERROR();
 
     automataRenderer.AdjustViewport();
     automataRenderer.Render();
@@ -294,7 +294,7 @@ void LifeContext::Display() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
     // Render to screen
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, width, height); LOGOPENGLERROR();
     screenRenderer.Render();
 
     DisplayUi();
