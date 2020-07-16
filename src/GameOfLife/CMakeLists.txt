@@ -25,8 +25,11 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/life.frag
     ${CMAKE_CURRENT_BINARY_DIR}/data/life.frag COPYONLY)
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/life-init.frag
-    ${CMAKE_CURRENT_BINARY_DIR}/data/life-init.frag COPYONLY)
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/life-random-init.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/life-random-init.frag COPYONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/life-radial-init.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/life-radial-init.frag COPYONLY)
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/screen-plane.vert
     ${CMAKE_CURRENT_BINARY_DIR}/data/screen-plane.vert COPYONLY)

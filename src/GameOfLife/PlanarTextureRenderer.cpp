@@ -24,19 +24,15 @@ PlanarTextureRenderer::~PlanarTextureRenderer() {
     Release();
 }
 
-bool PlanarTextureRenderer::Init(const std::string& vertexFileName, const std::string& fragmentFileName) {
-    mvp = glm::ortho(PlaneBounds.xmin, PlaneBounds.xmax, PlaneBounds.ymin, PlaneBounds.ymax);
-
-    // Init shader program
-    if (!Shader::createProgram(program, vertexFileName, fragmentFileName)) {
-        LOGE << "Failed to init shader program for planar texture";
-        return false;
-    }
+bool PlanarTextureRenderer::Init(GLuint p) {
+    program = p;
 
     uRes = glGetUniformLocation(program, "res"); LOGOPENGLERROR();
     uMvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
     uTex = glGetUniformLocation(program, "tex"); LOGOPENGLERROR();
     uTime = glGetUniformLocation(program, "time"); LOGOPENGLERROR();
+
+    mvp = glm::ortho(PlaneBounds.xmin, PlaneBounds.xmax, PlaneBounds.ymin, PlaneBounds.ymax);
 
     // Init VAO
     glGenVertexArrays(1, &vao); LOGOPENGLERROR();

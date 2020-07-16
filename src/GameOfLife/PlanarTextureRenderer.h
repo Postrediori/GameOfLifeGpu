@@ -4,7 +4,7 @@ class PlanarTextureRenderer {
 public:
     ~PlanarTextureRenderer();
 
-    bool Init(const std::string& vertexFileName, const std::string& fragmentFileName);
+    bool Init(GLuint program);
     void Release();
     void Resize(int newWidth, int newHeight);
     void Render(bool adjustViewport);
@@ -12,7 +12,6 @@ public:
     void SetTexture(GLuint t);
     void SetTime(double t);
     void SetMvp(glm::mat4 mvp);
-    GLuint GetProgram() const { return program; }
 
 private:
     int width = 0, height = 0;

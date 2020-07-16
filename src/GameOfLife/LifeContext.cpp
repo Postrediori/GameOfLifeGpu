@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GraphicsUtils.h"
+#include "Shader.h"
 #include "PlanarTextureRenderer.h"
 #include "FrameBufferWrapper.h"
 #include "LifeContext.h"
@@ -10,8 +11,11 @@ static const double UiWidth = 250.0;
 static const std::string BufferRendererVert = "data/life.vert";
 static const std::string BufferRendererFrag = "data/life.frag";
 
-static const std::string InitialDataVert = BufferRendererVert;
-static const std::string InitialDataFrag = "data/life-init.frag";
+static const std::string RadialInitialDataVert = BufferRendererVert;
+static const std::string RadialInitialDataFrag = "data/life-radial-init.frag";
+
+static const std::string RandomInitialDataVert = BufferRendererVert;
+static const std::string RandomInitialDataFrag = "data/life-random-init.frag";
 
 static const std::string ScreenRendererVert = "data/screen-plane.vert";
 static const std::string ScreenRendererFrag = "data/screen-plane.frag";
@@ -28,7 +32,8 @@ static const std::vector<std::tuple<std::string, int>> ModelSizes = {
     {"1024", 1024}
 };
 
-static const std::vector<std::tuple<std::string, std::string, AutomatonRules>> AutomatonRules = {
+using CellularAutomataRules = std::tuple<std::string, std::string, CellularAutomata::AutomatonRules>;
+static const std::vector<CellularAutomataRules> AutomatonRules = {
     {"Game of Life", "B3/S23", {8, 12}},
     {"High Life", "B36/S23", {72, 12}},
     {"Assimilation", "B345/S4567", {56, 240}},
@@ -47,6 +52,12 @@ static const std::vector<std::tuple<std::string, std::string, AutomatonRules>> A
     //{"Gnarl", "B1/S1", {1, 1}}, // <-- White noise
     //{"Replicator", "B1357/S1357", {170, 170}}, // <-- White noise
     {"Mystery", "B3458/S05678", {312, 481}},
+    {"Anneal", "B4678/S35678", {464, 488}},
+};
+
+static const std::vector<std::tuple<std::string, CellularAutomata::InitialRandomType>> InitialRandomTypes = {
+    {"Radial Random", CellularAutomata::InitialRandomType::RadialRandom},
+    {"Uniform Random", CellularAutomata::InitialRandomType::UniformRandom},
 };
 
 LifeContext::~LifeContext() {
@@ -85,6 +96,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
 
     // Init default rules
     currentRules = std::get<2>(AutomatonRules[0]);
+    initialRandomType = CellularAutomata::InitialRandomType::RadialRandom;
 
     // Init textures
     if (!InitTextures(texSize)) {
@@ -92,18 +104,41 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
         return false;
     }
 
-    // Init initial texture renderer
-    if (!bufferRenderer.Init(BufferRendererVert, BufferRendererFrag)) {
+    // Init shader programs
+    if (!Shader::createProgram(automataProgram, BufferRendererVert, BufferRendererFrag)) {
+        LOGE << "Failed to init shader program for cellular automata";
+        return false;
+    }
+
+    autotamaRulesBecameUniform = glGetUniformLocation(automataProgram, "rules.became");
+    autotamaRulesStayUniform = glGetUniformLocation(automataProgram, "rules.stay");
+
+    if (!Shader::createProgram(automataRadialInitProgram, RadialInitialDataVert, RadialInitialDataFrag) ||
+        !Shader::createProgram(automataRandomInitProgram, RandomInitialDataVert, RandomInitialDataFrag)) {
+        LOGE << "Failed to init shader program for initial state of cellular automata";
+        return false;
+    }
+
+    if (!Shader::createProgram(screenProgram, ScreenRendererVert, ScreenRendererFrag)) {
+        LOGE << "Failed to init shader program for screen rendering";
+        return false;
+    }
+
+    // Init cellular autotama renderer
+    if (!automataRenderer.Init(automataProgram)) {
         LOGE << "Failed to init texture renderer for frame buffer";
         return false;
     }
 
-    bufferRendererProgram = bufferRenderer.GetProgram();
-    bufferRendererRulesBecame = glGetUniformLocation(bufferRendererProgram, "rules.became");
-    bufferRendererRulesStay = glGetUniformLocation(bufferRendererProgram, "rules.stay");
+    automataRenderer.SetTexture(srcTexture);
+    automataRenderer.Resize(textureSize, textureSize);
 
-    bufferRenderer.SetTexture(srcTexture);
-    bufferRenderer.Resize(textureSize, textureSize);
+    // Setup initial automata renderer
+    if (!automataRandomInitialRenderer.Init(automataRandomInitProgram) ||
+        !automataRadialInitialRenderer.Init(automataRadialInitProgram)) {
+        LOGE << "Failed to setup initial cellular automata data creator";
+        return false;
+    }
 
     // Init framebuffer
     if (!frameBuffer.Init()) {
@@ -114,7 +149,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     frameBuffer.SetTexColorBuffer(dstTexture);
 
     // Init processed texture renderer
-    if (!screenRenderer.Init(ScreenRendererVert, ScreenRendererFrag)) {
+    if (!screenRenderer.Init(screenProgram)) {
         LOGE << "Failed to init processed texture renderer";
         return false;
     }
@@ -122,19 +157,14 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     screenRenderer.SetTexture(dstTexture);
     screenRenderer.Resize(width, height);
 
-    // Initial texture renderer
-    if (!initialBufferWriter.Init(InitialDataVert, InitialDataFrag)) {
-        LOGE << "Unable to create initial buffer texture renderer";
-        return false;
-    }
-
-    NeedDataInit();
-
     // Setup OpenGL flags
     glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
     glClearDepth(1.0); LOGOPENGLERROR();
 
     Reshape(newWidth, newHeight);
+
+    // Initial texture renderer
+    NeedDataInit();
 
     return true;
 }
@@ -142,22 +172,26 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
 void LifeContext::InitWithRandomData() {
     generationCounter = 0;
 
-    initialBufferWriter.SetTexture(dstTexture);
-    initialBufferWriter.Resize(textureSize, textureSize);
-    initialBufferWriter.SetTime(glfwGetTime());
+    PlanarTextureRenderer& initialRenderer =
+        (initialRandomType == CellularAutomata::InitialRandomType::UniformRandom) ?
+        automataRandomInitialRenderer : automataRadialInitialRenderer;
+
+    initialRenderer.SetTexture(dstTexture);
+    initialRenderer.Resize(textureSize, textureSize);
+    initialRenderer.SetTime(glfwGetTime());
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
-    initialBufferWriter.Render(true);
+    initialRenderer.Render(true);
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 }
 
 void LifeContext::SetModelSize(int newSize) {
     InitTextures(newSize);
 
-    bufferRenderer.SetTexture(srcTexture);
+    automataRenderer.SetTexture(srcTexture);
     frameBuffer.SetTexColorBuffer(dstTexture);
 
-    bufferRenderer.Resize(textureSize, textureSize);
+    automataRenderer.Resize(textureSize, textureSize);
 
     NeedDataInit();
 }
@@ -218,7 +252,7 @@ void LifeContext::SwapTextures() {
     srcTexture = temp;
 
     // Swap IDs in the renderer objects
-    bufferRenderer.SetTexture(srcTexture);
+    automataRenderer.SetTexture(srcTexture);
     frameBuffer.SetTexColorBuffer(dstTexture);
 
     screenRenderer.SetTexture(dstTexture);
@@ -230,11 +264,11 @@ void LifeContext::Display() {
     // Render to fixed-size framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
 
-    glUseProgram(bufferRendererProgram);
-    glUniform1i(bufferRendererRulesBecame, currentRules.became);
-    glUniform1i(bufferRendererRulesStay, currentRules.stay);
+    glUseProgram(automataProgram);
+    glUniform1i(autotamaRulesBecameUniform, currentRules.became);
+    glUniform1i(autotamaRulesStayUniform, currentRules.stay);
 
-    bufferRenderer.Render(true);
+    automataRenderer.Render(true);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
@@ -284,6 +318,18 @@ void LifeContext::DisplayUi() {
             NeedDataInit();
         }
         ImGui::SameLine(150); ImGui::Text(std::get<1>(r).c_str());
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text("Initial state:");
+
+    static int gInitialType = static_cast<int>(initialRandomType);
+    for (const auto& s : InitialRandomTypes) {
+        if (ImGui::RadioButton(std::get<0>(s).c_str(), &gInitialType, static_cast<int>(std::get<1>(s)))) {
+            initialRandomType = static_cast<CellularAutomata::InitialRandomType>(gInitialType);
+            NeedDataInit();
+        }
     }
 
     ImGui::Separator();
@@ -376,4 +422,3 @@ void LifeContext::Mouse(GLFWwindow* window, int button, int action, int /*mods*/
         }
     }
 }
-

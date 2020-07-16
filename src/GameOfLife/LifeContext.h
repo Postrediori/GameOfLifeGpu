@@ -1,9 +1,16 @@
 #pragma once
 
-struct AutomatonRules {
-    int became;
-    int stay;
-};
+namespace CellularAutomata {
+    struct AutomatonRules {
+        int became;
+        int stay;
+    };
+
+    enum class InitialRandomType {
+        RadialRandom = 0,
+        UniformRandom = 1,
+    };
+}
 
 class LifeContext {
 public:
@@ -44,15 +51,23 @@ private:
     GLuint srcTexture = 0;
     GLuint dstTexture = 0;
 
-    GLuint bufferRendererProgram = 0;
-    GLint bufferRendererRulesBecame = -1, bufferRendererRulesStay = -1;
-    PlanarTextureRenderer bufferRenderer;
-    PlanarTextureRenderer initialBufferWriter;
+    GLuint automataProgram = 0;
+    GLuint automataRadialInitProgram = 0;
+    GLuint automataRandomInitProgram = 0;
+
+    GLint autotamaRulesBecameUniform = -1;
+    GLint autotamaRulesStayUniform = -1;
+
+    PlanarTextureRenderer automataRenderer;
+    PlanarTextureRenderer automataRadialInitialRenderer;
+    PlanarTextureRenderer automataRandomInitialRenderer;
     FrameBufferWrapper frameBuffer;
 
+    GLuint screenProgram = 0;
     PlanarTextureRenderer screenRenderer;
 
     bool needDataInit = false;
 
-    AutomatonRules currentRules;
+    CellularAutomata::AutomatonRules currentRules;
+    CellularAutomata::InitialRandomType initialRandomType;
 };
