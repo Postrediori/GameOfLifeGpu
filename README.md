@@ -126,14 +126,15 @@ An `GameOfLifeGpu` application bundle will now be present under `<Source directo
 
 ## Controls
 
-* **F1** - Toggle fullscreen mode.
-* **RMB** and **Space** - Restart simulation.
-* **1..4** - Change model size (and restart simulation).
+* **F1** &ndash; Toggle fullscreen mode.
+* **RMB** and **Space** &ndash; Restart simulation.
+* **1..4** &ndash; Change model size (and restart simulation).
 
 
 ## Links
 
-* [Wikipedia - Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+* [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+* [Life-like cellular automaton](https://en.wikipedia.org/wiki/Life-like_cellular_automaton)
 
 
 ## TODO
