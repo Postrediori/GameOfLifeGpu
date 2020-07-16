@@ -34,25 +34,25 @@ static const std::vector<std::tuple<std::string, int>> ModelSizes = {
 
 using CellularAutomataRules = std::tuple<std::string, std::string, CellularAutomata::AutomatonRules>;
 static const std::vector<CellularAutomataRules> AutomatonRules = {
-    {"Game of Life", "B3/S23", {8, 12}},
-    {"High Life", "B36/S23", {72, 12}},
-    {"Assimilation", "B345/S4567", {56, 240}},
-    {"Day and Night", "B3678/S34678", {456, 472}},
-    //{"Amoeba", "B357/S1358", {168, 298}}, // <-- White noise
-    {"Move", "B368/S245", {328, 52}},
-    {"Pseudo Life", "B357/S238", {168, 268}},
-    //{"Diamoeba", "B35678/S5678", {488, 480}}, // <-- Captures all texture
-    //{"34", "B34/S34", {24, 24}}, // ---
-    //{"Long Life", "B345/S5", {56, 32}}, // <-- White noise
-    {"Stains", "B3678/S235678", {456, 492}},
-    //{"Seeds", "B2/S", {4, 0}}, // <-- White noise
-    {"Maze", "B3/S12345", {8, 62}},
-    {"Coagulations", "B378/S235678", {392, 492}}, // <-- Captures all texture
-    //{"Walled cities", "B45678/S2345", {496, 60}}, // <-- White noise
-    //{"Gnarl", "B1/S1", {1, 1}}, // <-- White noise
-    //{"Replicator", "B1357/S1357", {170, 170}}, // <-- White noise
-    {"Mystery", "B3458/S05678", {312, 481}},
-    {"Anneal", "B4678/S35678", {464, 488}},
+    {"Game of Life", "B3/S23", {1, 8, 12}},
+    {"High Life", "B36/S23", {2, 72, 12}},
+    {"Assimilation", "B345/S4567", {3, 56, 240}},
+    {"Day and Night", "B3678/S34678", {4, 456, 472}},
+    //{"Amoeba", "B357/S1358", {5, 168, 298}}, // <-- White noise
+    {"Move", "B368/S245", {6, 328, 52}},
+    {"Pseudo Life", "B357/S238", {7, 168, 268}},
+    //{"Diamoeba", "B35678/S5678", {8, 488, 480}}, // <-- Captures all texture
+    //{"34", "B34/S34", {9, 24, 24}}, // ---
+    //{"Long Life", "B345/S5", {10, 56, 32}}, // <-- White noise
+    {"Stains", "B3678/S235678", {11, 456, 492}},
+    //{"Seeds", "B2/S", {12, 4, 0}}, // <-- White noise
+    {"Maze", "B3/S12345", {13, 8, 62}},
+    {"Coagulations", "B378/S235678", {14, 392, 492}}, // <-- Captures all texture
+    //{"Walled cities", "B45678/S2345", {15, 496, 60}}, // <-- White noise
+    //{"Gnarl", "B1/S1", {16, 1, 1}}, // <-- White noise
+    //{"Replicator", "B1357/S1357", {17, 170, 170}}, // <-- White noise
+    {"Mystery", "B3458/S05678", {18, 312, 481}},
+    {"Anneal", "B4678/S35678", {19, 464, 488}},
 };
 
 static const std::vector<std::tuple<std::string, CellularAutomata::InitialRandomType>> InitialRandomTypes = {
@@ -197,6 +197,16 @@ void LifeContext::SetModelSize(int newSize) {
     NeedDataInit();
 }
 
+void LifeContext::SetAutomatonRules(CellularAutomata::AutomatonRules newRules) {
+    this->currentRules = newRules;
+    this->NeedDataInit();
+}
+
+void LifeContext::SetInitialRandomType(CellularAutomata::InitialRandomType newType) {
+    this->initialRandomType = newType;
+    this->NeedDataInit();
+}
+
 void LifeContext::Reshape(int newWidth, int newHeight) {
     width = newWidth;
     height = newHeight;
@@ -311,14 +321,19 @@ void LifeContext::DisplayUi() {
 
     ImGui::Separator();
 
-    int gModelSize = textureSize;
     ImGui::Text("Model size:");
-    for (auto it = ModelSizes.begin(); it != ModelSizes.end(); it++) {
-        const auto& s = *it;
-        if (ImGui::RadioButton(std::get<0>(s).c_str(), &gModelSize, std::get<1>(s))) {
-            SetModelSize(gModelSize);
+
+    int iModelSize = textureSize;
+    int k = 0;
+    for (const auto& s : ModelSizes) {
+        std::string name;
+        int size;
+        std::tie(name, size) = s;
+
+        if (ImGui::RadioButton(name.c_str(), &iModelSize, size)) {
+            SetModelSize(iModelSize);
         }
-        if (it != std::prev(ModelSizes.end())) {
+        if (k++ < (ModelSizes.size() - 1)) {
             ImGui::SameLine();
         }
     }
@@ -327,27 +342,29 @@ void LifeContext::DisplayUi() {
 
     ImGui::Text("Cellular Automaton Rules:");
 
-    static int selectedRule = 0;
-    for (int i = 0; i < AutomatonRules.size(); i++) {
-        const auto& r = AutomatonRules[i];
-        if (ImGui::Selectable(std::get<0>(r).c_str(), selectedRule == i)) {
-            selectedRule = i;
+    for (const auto& r : AutomatonRules) {
+        std::string name, rulesDesc;
+        CellularAutomata::AutomatonRules rules;
+        std::tie(name, rulesDesc, rules) = r;
 
-            currentRules = std::get<2>(r);
-            NeedDataInit();
+        if (ImGui::Selectable(name.c_str(), currentRules.id == rules.id)) {
+            SetAutomatonRules(rules);
         }
-        ImGui::SameLine(150); ImGui::Text(std::get<1>(r).c_str());
+        ImGui::SameLine(150); ImGui::Text(rulesDesc.c_str());
     }
 
     ImGui::Separator();
 
     ImGui::Text("Initial state:");
 
-    static int gInitialType = static_cast<int>(initialRandomType);
+    int iRandomType = static_cast<int>(this->initialRandomType);
     for (const auto& s : InitialRandomTypes) {
-        if (ImGui::RadioButton(std::get<0>(s).c_str(), &gInitialType, static_cast<int>(std::get<1>(s)))) {
-            initialRandomType = static_cast<CellularAutomata::InitialRandomType>(gInitialType);
-            NeedDataInit();
+        std::string name;
+        CellularAutomata::InitialRandomType id;
+        std::tie(name, id) = s;
+
+        if (ImGui::RadioButton(name.c_str(), &iRandomType, static_cast<int>(id))) {
+            this->SetInitialRandomType(id);
         }
     }
 

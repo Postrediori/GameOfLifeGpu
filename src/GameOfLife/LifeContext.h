@@ -2,6 +2,7 @@
 
 namespace CellularAutomata {
     struct AutomatonRules {
+        int id;
         int became;
         int stay;
     };
@@ -39,6 +40,8 @@ private:
 
     void InitWithRandomData();
     void SetModelSize(int newSize);
+    void SetAutomatonRules(CellularAutomata::AutomatonRules newRules);
+    void SetInitialRandomType(CellularAutomata::InitialRandomType newType);
 
 private:
     int width = 0, height = 0;
