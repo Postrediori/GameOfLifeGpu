@@ -329,7 +329,7 @@ void LifeContext::DisplayUi() {
     ImGui::Text("Model size:");
 
     int iModelSize = textureSize;
-    int k = 0;
+    size_t k = 0;
     for (const auto& s : ModelSizes) {
         std::string name;
         int size;
@@ -355,7 +355,7 @@ void LifeContext::DisplayUi() {
         if (ImGui::Selectable(name.c_str(), currentRules.id == rules.id)) {
             SetAutomatonRules(rules);
         }
-        ImGui::SameLine(150); ImGui::Text(rulesDesc.c_str());
+        ImGui::SameLine(150); ImGui::Text("%s", rulesDesc.c_str());
     }
 
     ImGui::Separator();
