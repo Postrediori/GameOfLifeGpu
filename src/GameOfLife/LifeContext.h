@@ -62,9 +62,9 @@ private:
     GLuint automataProgram = 0;
     GLuint automataInitProgram = 0;
 
-    GLint autotamaRulesBecameUniform = -1;
-    GLint autotamaRulesStayUniform = -1;
-    GLint autotamaInitTypeUniform = -1;
+    GLint uInitType = -1;
+    GLint uRulesBecame = -1, uRulesStay = -1;
+    GLuint uNeedSetActivity = -1, uActivityPos = -1;
 
     PlanarTextureRenderer automataRenderer;
     PlanarTextureRenderer automataInitialRenderer;

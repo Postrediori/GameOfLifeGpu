@@ -108,15 +108,18 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
         return false;
     }
 
-    autotamaRulesBecameUniform = glGetUniformLocation(automataProgram, "rules.became"); LOGOPENGLERROR();
-    autotamaRulesStayUniform = glGetUniformLocation(automataProgram, "rules.stay"); LOGOPENGLERROR();
+    uRulesBecame = glGetUniformLocation(automataProgram, "rules.became"); LOGOPENGLERROR();
+    uRulesStay = glGetUniformLocation(automataProgram, "rules.stay"); LOGOPENGLERROR();
+
+    uNeedSetActivity = glGetUniformLocation(automataProgram, "needSetActivity"); LOGOPENGLERROR();
+    uActivityPos = glGetUniformLocation(automataProgram, "activityPos"); LOGOPENGLERROR();
 
     if (!Shader::createProgram(automataInitProgram, InitialDataVert, InitialDataFrag)) {
         LOGE << "Failed to init shader program for initial state of cellular automata";
         return false;
     }
 
-    autotamaInitTypeUniform = glGetUniformLocation(automataInitProgram, "initType"); LOGOPENGLERROR();
+    uInitType = glGetUniformLocation(automataInitProgram, "initType"); LOGOPENGLERROR();
 
     if (!Shader::createProgram(screenProgram, ScreenRendererVert, ScreenRendererFrag)) {
         LOGE << "Failed to init shader program for screen rendering";
@@ -175,7 +178,7 @@ void LifeContext::InitWithRandomData() {
     automataInitialRenderer.SetTime(glfwGetTime());
 
     glUseProgram(automataInitProgram); LOGOPENGLERROR();
-    glUniform1i(autotamaInitTypeUniform, static_cast<int>(initialRandomType)); LOGOPENGLERROR();
+    glUniform1i(uInitType, static_cast<int>(initialRandomType)); LOGOPENGLERROR();
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
     automataInitialRenderer.AdjustViewport();
@@ -286,19 +289,16 @@ void LifeContext::Display() {
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
 
     glUseProgram(automataProgram); LOGOPENGLERROR();
-    glUniform1i(autotamaRulesBecameUniform, currentRules.became); LOGOPENGLERROR();
-    glUniform1i(autotamaRulesStayUniform, currentRules.stay); LOGOPENGLERROR();
+    glUniform1i(uRulesBecame, currentRules.became); LOGOPENGLERROR();
+    glUniform1i(uRulesStay, currentRules.stay); LOGOPENGLERROR();
 
-    GLuint uNeedSetActivity = glGetUniformLocation(automataProgram, "needSetActivity");
     if (needSetActivity) {
-        GLint uActivityPos = glGetUniformLocation(automataProgram, "activityPos");
-
-        glUniform1i(uNeedSetActivity, 1);
-        glUniform2fv(uActivityPos, 1, glm::value_ptr(activityPos));
+        glUniform1i(uNeedSetActivity, 1); LOGOPENGLERROR();
+        glUniform2fv(uActivityPos, 1, glm::value_ptr(activityPos)); LOGOPENGLERROR();
         needSetActivity = false;
     }
     else {
-        glUniform1i(uNeedSetActivity, 0);
+        glUniform1i(uNeedSetActivity, 0); LOGOPENGLERROR();
     }
 
     automataRenderer.AdjustViewport();
