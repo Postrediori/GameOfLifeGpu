@@ -109,11 +109,6 @@ void PlanarTextureRenderer::AdjustViewport() {
 }
 
 void PlanarTextureRenderer::Render() {
-    if (!texture) {
-        // Nothing to render
-        return;
-    }
-
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();
 

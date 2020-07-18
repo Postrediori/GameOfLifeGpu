@@ -52,10 +52,10 @@ static const std::vector<CellularAutomataRules> AutomatonRules = {
     {"Anneal", "B4678/S35678", {19, 464, 488}},
 };
 
-static const std::vector<std::tuple<std::string, CellularAutomata::InitialRandomType>> InitialRandomTypes = {
-    {"Empty / Manual draw", CellularAutomata::InitialRandomType::EmptyInit},
-    {"Radial Random", CellularAutomata::InitialRandomType::RadialRandom},
-    {"Uniform Random", CellularAutomata::InitialRandomType::UniformRandom},
+static const std::vector<std::tuple<std::string, CellularAutomata::FirstGenerationType>> InitialRandomTypes = {
+    {"Empty / Manual draw", CellularAutomata::FirstGenerationType::Empty},
+    {"Radial Random", CellularAutomata::FirstGenerationType::RadialRandom},
+    {"Uniform Random", CellularAutomata::FirstGenerationType::UniformRandom},
 };
 
 LifeContext::~LifeContext() {
@@ -67,13 +67,13 @@ bool LifeContext::InitTextures(int newSize) {
 
     textureSize = newSize;
 
-    srcTexture = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
-    if (!srcTexture) {
+    currentGenerationTex = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
+    if (!currentGenerationTex) {
         return false;
     }
 
-    dstTexture = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
-    if (!dstTexture) {
+    nextGenerationTex = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
+    if (!nextGenerationTex) {
         return false;
     }
 
@@ -94,15 +94,9 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
 
     // Init default rules
     currentRules = std::get<2>(AutomatonRules[0]);
-    initialRandomType = CellularAutomata::InitialRandomType::RadialRandom;
+    firstGenerationType = CellularAutomata::FirstGenerationType::RadialRandom;
 
-    // Init textures
-    if (!InitTextures(texSize)) {
-        LOGE << "Failed to init textures";
-        return false;
-    }
-
-    // Init shader programs
+    // CA simulation
     if (!Shader::createProgram(automataProgram, BufferRendererVert, BufferRendererFrag)) {
         LOGE << "Failed to init shader program for cellular automata";
         return false;
@@ -114,6 +108,12 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     uNeedSetActivity = glGetUniformLocation(automataProgram, "needSetActivity"); LOGOPENGLERROR();
     uActivityPos = glGetUniformLocation(automataProgram, "activityPos"); LOGOPENGLERROR();
 
+    if (!automataRenderer.Init(automataProgram)) {
+        LOGE << "Failed to init texture renderer for frame buffer";
+        return false;
+    }
+
+    // CA init data
     if (!Shader::createProgram(automataInitProgram, InitialDataVert, InitialDataFrag)) {
         LOGE << "Failed to init shader program for initial state of cellular automata";
         return false;
@@ -121,25 +121,24 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
 
     uInitType = glGetUniformLocation(automataInitProgram, "initType"); LOGOPENGLERROR();
 
+    if (!automataInitialRenderer.Init(automataInitProgram)) {
+        LOGE << "Failed to setup initial cellular automata data creator";
+        return false;
+    }
+
+    // Screen renderer
     if (!Shader::createProgram(screenProgram, ScreenRendererVert, ScreenRendererFrag)) {
         LOGE << "Failed to init shader program for screen rendering";
         return false;
     }
 
-    // Init cellular autotama renderer
-    if (!automataRenderer.Init(automataProgram)) {
-        LOGE << "Failed to init texture renderer for frame buffer";
+    if (!screenRenderer.Init(screenProgram)) {
+        LOGE << "Failed to init processed texture renderer";
         return false;
     }
 
-    automataRenderer.SetTexture(srcTexture);
-    automataRenderer.Resize(textureSize, textureSize);
-
-    // Setup initial automata renderer
-    if (!automataInitialRenderer.Init(automataInitProgram)) {
-        LOGE << "Failed to setup initial cellular automata data creator";
-        return false;
-    }
+    //screenRenderer.SetTexture(nextGenerationTex);
+    screenRenderer.Resize(width, height);
 
     // Init framebuffer
     if (!frameBuffer.Init()) {
@@ -147,38 +146,27 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
         return false;
     }
 
-    frameBuffer.SetTexColorBuffer(dstTexture);
-
-    // Init processed texture renderer
-    if (!screenRenderer.Init(screenProgram)) {
-        LOGE << "Failed to init processed texture renderer";
-        return false;
-    }
-    
-    screenRenderer.SetTexture(dstTexture);
-    screenRenderer.Resize(width, height);
-
     // Setup OpenGL flags
     glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
     glClearDepth(1.0); LOGOPENGLERROR();
 
     Reshape(newWidth, newHeight);
 
-    // Initial texture renderer
-    NeedDataInit();
+    // Init textures and create first generation
+    SetModelSize(texSize);
 
     return true;
 }
 
-void LifeContext::InitWithRandomData() {
+void LifeContext::InitFirstGeneration() {
     generationCounter = 0;
     
-    automataInitialRenderer.SetTexture(dstTexture);
-    automataInitialRenderer.Resize(textureSize, textureSize);
     automataInitialRenderer.SetTime(glfwGetTime());
 
     glUseProgram(automataInitProgram); LOGOPENGLERROR();
-    glUniform1i(uInitType, static_cast<int>(initialRandomType)); LOGOPENGLERROR();
+    glUniform1i(uInitType, static_cast<int>(firstGenerationType)); LOGOPENGLERROR();
+
+    frameBuffer.SetTexColorBuffer(nextGenerationTex);
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
     automataInitialRenderer.AdjustViewport();
@@ -189,10 +177,10 @@ void LifeContext::InitWithRandomData() {
 void LifeContext::SetModelSize(int newSize) {
     InitTextures(newSize);
 
-    automataRenderer.SetTexture(srcTexture);
-    frameBuffer.SetTexColorBuffer(dstTexture);
+    // SwapGenerations();
 
     automataRenderer.Resize(textureSize, textureSize);
+    automataInitialRenderer.Resize(textureSize, textureSize);
 
     NeedDataInit();
 }
@@ -202,8 +190,8 @@ void LifeContext::SetAutomatonRules(CellularAutomata::AutomatonRules newRules) {
     this->NeedDataInit();
 }
 
-void LifeContext::SetInitialRandomType(CellularAutomata::InitialRandomType newType) {
-    this->initialRandomType = newType;
+void LifeContext::SetFirstGenerationType(CellularAutomata::FirstGenerationType newType) {
+    this->firstGenerationType = newType;
     this->NeedDataInit();
 }
 
@@ -234,13 +222,13 @@ void LifeContext::Release() {
 }
 
 void LifeContext::ReleaseTextures() {
-    if (srcTexture) {
-        glDeleteTextures(1, &srcTexture); LOGOPENGLERROR();
-        srcTexture = 0;
+    if (currentGenerationTex) {
+        glDeleteTextures(1, &currentGenerationTex); LOGOPENGLERROR();
+        currentGenerationTex = 0;
     }
-    if (dstTexture) {
-        glDeleteTextures(1, &dstTexture); LOGOPENGLERROR();
-        srcTexture = 0;
+    if (nextGenerationTex) {
+        glDeleteTextures(1, &nextGenerationTex); LOGOPENGLERROR();
+        currentGenerationTex = 0;
     }
 }
 
@@ -259,33 +247,19 @@ void LifeContext::Update() {
     }
 
     if (needDataInit) {
-        InitWithRandomData();
+        InitFirstGeneration();
         needDataInit = false;
+    }
+    else {
+        CalcNextGeneration();
     }
 
     // Move to the next generation
-    SwapTextures();
+    SwapGenerations();
     gensCounter++;
-    generationCounter++;
 }
 
-void LifeContext::SwapTextures() {
-    // Swap IDs
-    GLuint temp = dstTexture;
-    dstTexture = srcTexture;
-    srcTexture = temp;
-
-    // Swap IDs in the renderer objects
-    automataRenderer.SetTexture(srcTexture);
-    frameBuffer.SetTexColorBuffer(dstTexture);
-
-    screenRenderer.SetTexture(dstTexture);
-}
-
-void LifeContext::Display() {
-    glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
-
-    // Render to fixed-size framebuffer
+void LifeContext::CalcNextGeneration() {
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
 
     glUseProgram(automataProgram); LOGOPENGLERROR();
@@ -305,6 +279,25 @@ void LifeContext::Display() {
     automataRenderer.Render();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
+
+    generationCounter++;
+}
+
+void LifeContext::SwapGenerations() {
+    // Swap IDs
+    GLuint temp = nextGenerationTex;
+    nextGenerationTex = currentGenerationTex;
+    currentGenerationTex = temp;
+
+    // Swap IDs in the renderer objects
+    automataRenderer.SetTexture(currentGenerationTex);
+    frameBuffer.SetTexColorBuffer(nextGenerationTex);
+
+    screenRenderer.SetTexture(nextGenerationTex);
+}
+
+void LifeContext::Display() {
+    glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
 
     // Render to screen
     glViewport(0, 0, width, height); LOGOPENGLERROR();
@@ -362,14 +355,14 @@ void LifeContext::DisplayUi() {
 
     ImGui::Text("Initial state:");
 
-    int iRandomType = static_cast<int>(this->initialRandomType);
+    int iRandomType = static_cast<int>(this->firstGenerationType);
     for (const auto& s : InitialRandomTypes) {
         std::string name;
-        CellularAutomata::InitialRandomType id;
+        CellularAutomata::FirstGenerationType id;
         std::tie(name, id) = s;
 
         if (ImGui::RadioButton(name.c_str(), &iRandomType, static_cast<int>(id))) {
-            this->SetInitialRandomType(id);
+            this->SetFirstGenerationType(id);
         }
     }
 
@@ -392,7 +385,7 @@ void LifeContext::DisplayUi() {
 }
 
 void LifeContext::MouseDown(int x, int y) {
-    if (initialRandomType != CellularAutomata::InitialRandomType::EmptyInit) {
+    if (firstGenerationType != CellularAutomata::FirstGenerationType::Empty) {
         return;
     }
 

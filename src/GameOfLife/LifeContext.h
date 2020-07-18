@@ -7,8 +7,8 @@ namespace CellularAutomata {
         int stay;
     };
 
-    enum class InitialRandomType {
-        EmptyInit = 0,
+    enum class FirstGenerationType {
+        Empty = 0,
         UniformRandom = 1,
         RadialRandom = 2,
     };
@@ -38,14 +38,15 @@ private:
     void ReleaseTextures();
     void Release();
 
-    void SwapTextures();
+    void InitFirstGeneration();
+    void CalcNextGeneration();
+    void SwapGenerations();
 
     void DisplayUi();
 
-    void InitWithRandomData();
     void SetModelSize(int newSize);
     void SetAutomatonRules(CellularAutomata::AutomatonRules newRules);
-    void SetInitialRandomType(CellularAutomata::InitialRandomType newType);
+    void SetFirstGenerationType(CellularAutomata::FirstGenerationType newType);
 
 private:
     int width = 0, height = 0;
@@ -56,27 +57,27 @@ private:
 
     int textureSize = 0;
 
-    GLuint srcTexture = 0;
-    GLuint dstTexture = 0;
+    GLuint currentGenerationTex = 0;
+    GLuint nextGenerationTex = 0;
 
     GLuint automataProgram = 0;
-    GLuint automataInitProgram = 0;
-
-    GLint uInitType = -1;
     GLint uRulesBecame = -1, uRulesStay = -1;
-    GLuint uNeedSetActivity = -1, uActivityPos = -1;
-
+    GLint uNeedSetActivity = -1, uActivityPos = -1;
     PlanarTextureRenderer automataRenderer;
+
+    GLuint automataInitProgram = 0;
+    GLint uInitType = -1;
     PlanarTextureRenderer automataInitialRenderer;
-    FrameBufferWrapper frameBuffer;
 
     GLuint screenProgram = 0;
     PlanarTextureRenderer screenRenderer;
 
+    FrameBufferWrapper frameBuffer;
+
     bool needDataInit = false;
 
     CellularAutomata::AutomatonRules currentRules;
-    CellularAutomata::InitialRandomType initialRandomType;
+    CellularAutomata::FirstGenerationType firstGenerationType;
 
     bool needSetActivity = false;
     glm::vec2 activityPos;
