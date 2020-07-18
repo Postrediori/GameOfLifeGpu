@@ -102,8 +102,8 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
         return false;
     }
 
-    uRulesBecame = glGetUniformLocation(automataProgram, "rules.became"); LOGOPENGLERROR();
-    uRulesStay = glGetUniformLocation(automataProgram, "rules.stay"); LOGOPENGLERROR();
+    uRulesBirth = glGetUniformLocation(automataProgram, "rules.birth"); LOGOPENGLERROR();
+    uRulesSurvive = glGetUniformLocation(automataProgram, "rules.survive"); LOGOPENGLERROR();
 
     uNeedSetActivity = glGetUniformLocation(automataProgram, "needSetActivity"); LOGOPENGLERROR();
     uActivityPos = glGetUniformLocation(automataProgram, "activityPos"); LOGOPENGLERROR();
@@ -263,8 +263,8 @@ void LifeContext::CalcNextGeneration() {
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
 
     glUseProgram(automataProgram); LOGOPENGLERROR();
-    glUniform1i(uRulesBecame, currentRules.became); LOGOPENGLERROR();
-    glUniform1i(uRulesStay, currentRules.stay); LOGOPENGLERROR();
+    glUniform1i(uRulesBirth, currentRules.birth); LOGOPENGLERROR();
+    glUniform1i(uRulesSurvive, currentRules.survive); LOGOPENGLERROR();
 
     if (needSetActivity) {
         glUniform1i(uNeedSetActivity, 1); LOGOPENGLERROR();

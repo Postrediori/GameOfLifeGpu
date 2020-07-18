@@ -12,8 +12,8 @@ const int InitEmpty=0;
 const int InitUniformRandom=1;
 const int InitRadialRandom=2;
 
-const float ActiveCell=1.;
-const float InactiveCell=0.;
+const float PopulatedCell=1.;
+const float UnpopulatedCell=0.;
 
 const float TimeScale=0.002;
 const float RadialScale=100.;
@@ -26,20 +26,20 @@ void main(void) {
     float c = 0.;
     
     if (initType==InitEmpty) {
-        c=InactiveCell;
+        c=UnpopulatedCell;
     }
     else {
         vec2 uv=fragTexCoord;
         vec2 timeSeed=vec2(time,time)*TimeScale;
         
         if (initType==InitUniformRandom) {
-            c=rand(uv+timeSeed) > .5 ? ActiveCell : InactiveCell;
+            c=rand(uv+timeSeed) > .5 ? PopulatedCell : UnpopulatedCell;
         }
         else if (initType==InitRadialRandom) {
             vec2 c0=uv-vec2(0.5);
             vec2 rt=vec2(trunc((length(c0)*RadialScale)));
         
-            c=rand(rt+timeSeed) > .5 ? ActiveCell : InactiveCell;
+            c=rand(rt+timeSeed) > .5 ? PopulatedCell : UnpopulatedCell;
         }
     }
     

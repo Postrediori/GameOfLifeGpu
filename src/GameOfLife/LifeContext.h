@@ -3,8 +3,8 @@
 namespace CellularAutomata {
     struct AutomatonRules {
         int id;
-        int became;
-        int stay;
+        int birth;
+        int survive;
     };
 
     enum class FirstGenerationType {
@@ -61,7 +61,7 @@ private:
     GLuint nextGenerationTex = 0;
 
     GLuint automataProgram = 0;
-    GLint uRulesBecame = -1, uRulesStay = -1;
+    GLint uRulesBirth = -1, uRulesSurvive = -1;
     GLint uNeedSetActivity = -1, uActivityPos = -1;
     PlanarTextureRenderer automataRenderer;
 

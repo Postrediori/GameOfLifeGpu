@@ -7,8 +7,8 @@ out vec4 outFragCol;
 uniform sampler2D tex;
 
 struct GameRules {
-    int became;
-    int stay;
+    int birth;
+    int survive;
 };
 
 uniform GameRules rules;
@@ -17,8 +17,8 @@ uniform bool needSetActivity;
 uniform vec2 activityPos;
 const float ActivityRadius = 0.05;
 
-const float ActiveCell=1.;
-const float InactiveCell=0.;
+const float PopulatedCell=1.;
+const float UnpopulatedCell=0.;
 
 // Check that n-th bit of b is set
 bool isBitSet(int b, int n) {
@@ -38,30 +38,30 @@ int getNeighbours(vec2 uv) {
     int k=0;
     for (int i=0; i<NBCount; i++) {
         float nb=texture(tex,uv+dxy*dnb[i]).r;
-        if(nb==ActiveCell){
+        if(nb==PopulatedCell){
             k++;
         }
     }
     return k;
 }
 
-bool ruleBegin(int nb) {
-    return isBitSet(rules.became, nb);
+bool ruleBirth(int nb) {
+    return isBitSet(rules.birth, nb);
 }
 
-bool ruleStay(int nb) {
-    return isBitSet(rules.stay, nb);
+bool ruleSurvive(int nb) {
+    return isBitSet(rules.survive, nb);
 }
 
 float calcActivity(float c, int nb) {
-    if (c==ActiveCell) {
-        if (!ruleStay(nb)) {
-            c=InactiveCell;
+    if (c==PopulatedCell) {
+        if (!ruleSurvive(nb)) {
+            c=UnpopulatedCell;
         }
     }
-    else if (c==InactiveCell) {
-        if (ruleBegin(nb)) {
-            c=ActiveCell;
+    else if (c==UnpopulatedCell) {
+        if (ruleBirth(nb)) {
+            c=PopulatedCell;
         }
     }
     return c;
@@ -76,7 +76,7 @@ void main(void) {
     c=calcActivity(c,k);
 
     if (needSetActivity && length(uv-activityPos)<ActivityRadius) {
-        c=ActiveCell;
+        c=PopulatedCell;
     }
 
     outFragCol=vec4(c,0.,0.,1.);
