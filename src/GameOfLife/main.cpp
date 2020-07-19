@@ -86,7 +86,7 @@ int main(int /*argc*/, char** /*argv*/) {
     });
 
     // Setup program objects
-    LifeContext context;
+    LifeContext context(window);
     if (!context.Init(Width, Height, TextureSize)) {
         LOGE << "Initialization failed";
         return EXIT_FAILURE;
@@ -108,15 +108,6 @@ int main(int /*argc*/, char** /*argv*/) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         context.Update();
-        {
-            int status = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1);
-            if (status == GLFW_PRESS) {
-                double x = 0.0, y = 0.0;
-                glfwGetCursorPos(window, &x, &y);
-
-                context.MouseDown(x, y);
-            }
-        }
 
         glfwSwapBuffers(window);
     }

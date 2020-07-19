@@ -16,6 +16,7 @@ namespace CellularAutomata {
 
 class LifeContext {
 public:
+    LifeContext(GLFWwindow* w);
     ~LifeContext();
 
     bool Init(int width, int height, int textureSize);
@@ -49,6 +50,8 @@ private:
     void SetFirstGenerationType(CellularAutomata::FirstGenerationType newType);
 
 private:
+    GLFWwindow* window = nullptr;
+
     int width = 0, height = 0;
 
     int generationCounter = 0;

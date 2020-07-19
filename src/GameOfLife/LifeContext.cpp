@@ -58,6 +58,10 @@ static const std::vector<std::tuple<std::string, CellularAutomata::FirstGenerati
     {"Uniform Random", CellularAutomata::FirstGenerationType::UniformRandom},
 };
 
+LifeContext::LifeContext(GLFWwindow* w)
+    : window(w) {
+}
+
 LifeContext::~LifeContext() {
     Release();
 }
@@ -244,6 +248,14 @@ void LifeContext::Update() {
         fps = ImGui::GetIO().Framerate;
         lastTime = currentTime;
         gensCounter = 0;
+    }
+
+    int status = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1);
+    if (status == GLFW_PRESS) {
+        double x = 0.0, y = 0.0;
+        glfwGetCursorPos(window, &x, &y);
+
+        this->MouseDown(x, y);
     }
 
     if (needDataInit) {
