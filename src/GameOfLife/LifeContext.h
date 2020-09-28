@@ -28,7 +28,7 @@ public:
     void NeedDataInit() { needDataInit = true; }
 
     void MouseDown(int x, int y);
-    void SetActivity(const glm::vec2& pos);
+    void SetActivity(hmm_vec2 pos);
 
     static void Reshape(GLFWwindow* window, int width, int height);
     static void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/);
@@ -83,5 +83,5 @@ private:
     CellularAutomata::FirstGenerationType firstGenerationType;
 
     bool needSetActivity = false;
-    glm::vec2 activityPos;
+    hmm_vec2 activityPos;
 };

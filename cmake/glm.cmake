@@ -1,1 +1,0 @@
-set(GLM_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty/glm)

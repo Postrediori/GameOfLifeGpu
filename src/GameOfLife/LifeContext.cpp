@@ -5,7 +5,6 @@
 #include "FrameBufferWrapper.h"
 #include "LifeContext.h"
 
-
 static const double UiWidth = 250.0;
 
 static const std::string BufferRendererVert = "data/life.vert";
@@ -17,10 +16,7 @@ static const std::string InitialDataFrag = "data/life-init.frag";
 static const std::string ScreenRendererVert = "data/screen-plane.vert";
 static const std::string ScreenRendererFrag = "data/screen-plane.frag";
 
-
-static const struct {
-    double xmin, xmax, ymin, ymax;
-} ScreenArea = { -1.0, 1.0, -1.0, 1.0 };
+static const hmm_vec4 ScreenArea = { -1.0, 1.0, -1.0, 1.0 };
 
 static const std::vector<std::tuple<std::string, int>> ModelSizes = {
     {"128", 128},
@@ -205,8 +201,8 @@ void LifeContext::Reshape(int newWidth, int newHeight) {
 
     double widthWithoutUi = width - UiWidth;
     double newScale = 2.0 / (double)(widthWithoutUi);
-    double newXMin = ScreenArea.xmin - UiWidth * newScale;
-    glm::mat4 screenMvp = glm::ortho(newXMin, ScreenArea.xmax, ScreenArea.ymin, ScreenArea.ymax);
+    double newXMin = ScreenArea.X - UiWidth * newScale;
+    hmm_mat4 screenMvp = HMM_Orthographic(newXMin, ScreenArea.Y, ScreenArea.Z, ScreenArea.W, 1.f, -1.f);
 
     screenRenderer.Resize(widthWithoutUi, height);
     screenRenderer.SetMvp(screenMvp);
@@ -280,7 +276,7 @@ void LifeContext::CalcNextGeneration() {
 
     if (needSetActivity) {
         glUniform1i(uNeedSetActivity, 1); LOGOPENGLERROR();
-        glUniform2fv(uActivityPos, 1, glm::value_ptr(activityPos)); LOGOPENGLERROR();
+        glUniform2fv(uActivityPos, 1, (const GLfloat*)(&activityPos)); LOGOPENGLERROR();
         needSetActivity = false;
     }
     else {
@@ -422,13 +418,13 @@ void LifeContext::MouseDown(int x, int y) {
         float s = (float)cx / (float)size;
         float t = 1.f - (float)cy / (float)size;
 
-        this->SetActivity(glm::vec2(s, t));
+        this->SetActivity(hmm_vec2{ s, t });
 
         LOGI << "Set Activity at [" << s << "," << t << "]";
     }
 }
 
-void LifeContext::SetActivity(const glm::vec2& pos) {
+void LifeContext::SetActivity(hmm_vec2 pos) {
     needSetActivity = true;
     activityPos = pos;
 }

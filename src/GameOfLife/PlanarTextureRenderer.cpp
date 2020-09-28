@@ -3,22 +3,19 @@
 #include "Shader.h"
 #include "PlanarTextureRenderer.h"
 
-static const struct areaf {
-    float xmin, xmax;
-    float ymin, ymax;
-} PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
+static const hmm_vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
 
 static const std::vector<float> PlaneVertices = {
-        -1.0f, -1.0f, 0.f, 0.f,
-        -1.0f, 1.0f, 0.f, 1.f,
-        1.0f, -1.0f, 1.f, 0.f,
-        1.0f, 1.0f, 1.f, 1.f,
-    };
+    -1.0f, -1.0f, 0.f, 0.f,
+    -1.0f, 1.0f, 0.f, 1.f,
+    1.0f, -1.0f, 1.f, 0.f,
+    1.0f, 1.0f, 1.f, 1.f,
+};
 
 static const std::vector<GLuint> PlaneIndices = {
-        0, 1, 2,
-        2, 1, 3,
-    };
+    0, 1, 2,
+    2, 1, 3,
+};
 
 PlanarTextureRenderer::~PlanarTextureRenderer() {
     Release();
@@ -32,7 +29,7 @@ bool PlanarTextureRenderer::Init(GLuint p) {
     uTex = glGetUniformLocation(program, "tex"); LOGOPENGLERROR();
     uTime = glGetUniformLocation(program, "time"); LOGOPENGLERROR();
 
-    mvp = glm::ortho(PlaneBounds.xmin, PlaneBounds.xmax, PlaneBounds.ymin, PlaneBounds.ymax);
+    mvp = HMM_Orthographic(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
 
     // Init VAO
     glGenVertexArrays(1, &vao); LOGOPENGLERROR();
@@ -53,12 +50,12 @@ bool PlanarTextureRenderer::Init(GLuint p) {
         PlaneVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init indices VBO
-    glGenBuffers(1, &indVbo);
+    glGenBuffers(1, &indVbo); LOGOPENGLERROR();
     if (!indVbo) {
         LOGE << "Failed to create indices VBO";
         return false;
     }
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo); LOGOPENGLERROR();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * PlaneIndices.size(), PlaneIndices.data(),
         GL_STATIC_DRAW); LOGOPENGLERROR();
 
@@ -87,7 +84,7 @@ void PlanarTextureRenderer::SetTime(double t) {
     time = t;
 }
 
-void PlanarTextureRenderer::SetMvp(glm::mat4 newMvp) {
+void PlanarTextureRenderer::SetMvp(hmm_mat4 newMvp) {
     mvp = newMvp;
 }
 
@@ -115,7 +112,7 @@ void PlanarTextureRenderer::Render() {
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(uMvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
+    glUniformMatrix4fv(uMvp, 1, GL_FALSE, (const GLfloat*)(&mvp)); LOGOPENGLERROR();
     glUniform2f(uRes, (GLfloat)width, (GLfloat)height); LOGOPENGLERROR();
     glUniform1i(uTex, 0); LOGOPENGLERROR();
     glUniform1f(uTime, time); LOGOPENGLERROR();
