@@ -20,10 +20,9 @@ This includes:
 
 * [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
 * [glfw](https://github.com/glfw/glfw) - Windowing and Input.
-* [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
 * [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 * [imgui](https://github.com/ocornut/imgui) - UI library.
-
+* [HandmadeMath](https://github.com/HandmadeMath/Handmade-Math) - Vector algebra.
 
 ## Building for Linux
 
