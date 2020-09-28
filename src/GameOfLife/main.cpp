@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ScopeGuard.h"
 #include "GraphicsUtils.h"
-#include "GraphicsLogFormatter.h"
+#include "LogFormatter.h"
 #include "PlanarTextureRenderer.h"
 #include "FrameBufferWrapper.h"
 #include "LifeContext.h"
@@ -24,11 +24,11 @@ static void Error(int /*error*/, const char* description) {
  * Main program
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
-    static plog::ConsoleAppender<plog::GraphicsLogFormatter> consoleAppender;
+    static plog::ConsoleAppender<plog::LogFormatter> logger;
 #ifdef NDEBUG
-    plog::init(plog::info, &consoleAppender);
+    plog::init(plog::info, &logger);
 #else
-    plog::init(plog::debug, &consoleAppender);
+    plog::init(plog::debug, &logger);
 #endif
 
     glfwSetErrorCallback(Error);

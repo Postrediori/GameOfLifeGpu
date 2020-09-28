@@ -15,7 +15,7 @@ target_link_libraries(${PROJECT}
     ${PLOG_LIBRARY}
     ${HMM_LIBRARY}
     GraphicsLib
-    ScopeGuardLib
+    UtilsLib
     )
 
 # Data files
