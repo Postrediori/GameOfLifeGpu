@@ -13,16 +13,54 @@ static const int TextureSize = 512;
 
 static const std::string Title = "Conway's Game of Life";
 
+
 /*****************************************************************************
- * Graphics-related functions
+ * GLFW Callbacks
  ****************************************************************************/
-static void Error(int /*error*/, const char* description) {
+
+void ErrorCallback(int /*error*/, const char* description) {
     LOGE << "Error: " << description;
 }
+
+
+/*****************************************************************************
+ *GUI Functions
+ ****************************************************************************/
+
+void GuiInit(GLFWwindow* window) {
+    assert(window);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr; // Disable .ini
+
+    static const std::string glslVersion = "#version 330 core";
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glslVersion.c_str());
+}
+
+void GuiTerminate() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    LOGD << "Cleanup : ImGui";
+}
+
+void GuiNewFrame() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void GuiRender() {
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
 
 /*****************************************************************************
  * Main program
  ****************************************************************************/
+
 int main(int /*argc*/, char** /*argv*/) {
     static plog::ConsoleAppender<plog::LogFormatter> logger;
 #ifdef NDEBUG
@@ -31,16 +69,13 @@ int main(int /*argc*/, char** /*argv*/) {
     plog::init(plog::debug, &logger);
 #endif
 
-    glfwSetErrorCallback(Error);
+    glfwSetErrorCallback(ErrorCallback);
 
     if (!glfwInit()) {
         LOGE << "Failed to load GLFW";
         return EXIT_FAILURE;
     }
-    ScopeGuard glfwGuard([]() {
-        glfwTerminate();
-        LOGD << "Cleanup : GLFW context";
-    });
+    ScopeGuard glfwGuard([]() { glfwTerminate(); });
 
     LOGI << "Init window context with OpenGL 3.3";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -48,68 +83,51 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    auto window = glfwCreateWindow(Width, Height, Title.c_str(), nullptr, nullptr);
+
+    std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> window(
+        glfwCreateWindow(Width, Height, Title.c_str(), nullptr, nullptr),
+        &glfwDestroyWindow);
     if (!window) {
         LOGE << "Unable to Create OpenGL 3.3 Context";
         return EXIT_FAILURE;
     }
-    ScopeGuard windowGuard([window]() {
-        glfwDestroyWindow(window);
-        LOGD << "Cleanup : GLFW window";
-    });
 
-    glfwSetKeyCallback(window, LifeContext::Keyboard);
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+    glfwSetKeyCallback(window.get(), LifeContext::Keyboard);
+    glfwSetInputMode(window.get(), GLFW_STICKY_KEYS, GLFW_TRUE);
 
-    glfwSetWindowSizeCallback(window, LifeContext::Reshape);
+    glfwSetWindowSizeCallback(window.get(), LifeContext::Reshape);
 
-    glfwSetMouseButtonCallback(window, LifeContext::Mouse);
-    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+    glfwSetMouseButtonCallback(window.get(), LifeContext::Mouse);
+    glfwSetInputMode(window.get(), GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(window.get());
     gladLoadGL();
 
     // Setup ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = nullptr; // Disable .ini
-
-    static const std::string gGlslVersion = "#version 330 core";
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(gGlslVersion.c_str());
-
-    ScopeGuard imGuiContextGuard([]() {
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        LOGD << "Cleanup : ImGui";
-    });
+    GuiInit(window.get());
+    ScopeGuard imGuiContextGuard([]() { GuiTerminate(); });
 
     // Setup program objects
-    LifeContext context(window);
+    LifeContext context(window.get());
     if (!context.Init(Width, Height, TextureSize)) {
         LOGE << "Initialization failed";
         return EXIT_FAILURE;
     }
-    glfwSetWindowUserPointer(window, static_cast<void *>(&context));
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window.get())) {
         glfwPollEvents();
 
         // Start ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        GuiNewFrame();
 
         context.Display();
 
         // Render ImGui
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        GuiRender();
 
         context.Update();
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window.get());
     }
 
     return EXIT_SUCCESS;

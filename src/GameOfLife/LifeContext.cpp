@@ -86,6 +86,8 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
+    glfwSetWindowUserPointer(this->window, static_cast<void *>(this));
+
     // Setup of ImGui visual style
     ImGui::StyleColorsLight();
     ImGuiStyle& style = ImGui::GetStyle();
