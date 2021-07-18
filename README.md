@@ -130,6 +130,18 @@ An `GameOfLifeGpu` application bundle will now be present under `<Source directo
 * **1..4** &ndash; Change model size (and restart simulation).
 
 
+## Tips
+
+### Disable vertical sync
+
+The FPS are often limited to the displays vertical refresh rate (i.e. 60 fps).
+In order to render generations as fast as possible on 3D-accelerated hardware adjust the `vblank_mode` environment variable:
+
+```
+vblank_mode=0 ./GameOfLife
+```
+
+
 ## Links
 
 * [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
