@@ -103,6 +103,8 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwMakeContextCurrent(window.get());
     gladLoadGL();
 
+    glfwSwapInterval(0); // Disable vsync to get maximum number of iterations
+
     // Setup ImGui
     GuiInit(window.get());
     ScopeGuard imGuiContextGuard([]() { GuiTerminate(); });
