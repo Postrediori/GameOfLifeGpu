@@ -11,5 +11,5 @@ const vec4 c2=vec4(0.03,0.19,0.48,1.);
 
 void main(void) {
     float c=texture(tex,fragTexCoord).r;
-    outFragCol=vec4((c2+c*(c1-c2)).rgb,1.);
+    outFragCol=vec4(mix(c2,c1,c).rgb,1.);
 }
