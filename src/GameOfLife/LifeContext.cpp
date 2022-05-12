@@ -170,16 +170,14 @@ void LifeContext::InitFirstGeneration() {
 
     frameBuffer.SetTexColorBuffer(nextGenerationTex);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
+    frameBuffer.Bind();
     automataInitialRenderer.AdjustViewport();
     automataInitialRenderer.Render();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
+    frameBuffer.Unbind();
 }
 
 void LifeContext::SetModelSize(int newSize) {
     InitTextures(newSize);
-
-    // SwapGenerations();
 
     automataRenderer.Resize(textureSize, textureSize);
     automataInitialRenderer.Resize(textureSize, textureSize);
@@ -270,7 +268,7 @@ void LifeContext::Update() {
 }
 
 void LifeContext::CalcNextGeneration() {
-    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.GetFrameBuffer()); LOGOPENGLERROR();
+    frameBuffer.Bind();
 
     glUseProgram(automataProgram); LOGOPENGLERROR();
     glUniform1i(uRulesBirth, currentRules.birth); LOGOPENGLERROR();
@@ -288,7 +286,7 @@ void LifeContext::CalcNextGeneration() {
     automataRenderer.AdjustViewport();
     automataRenderer.Render();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
+    frameBuffer.Unbind();
 
     generationCounter++;
 }

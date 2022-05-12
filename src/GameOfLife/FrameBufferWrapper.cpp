@@ -27,3 +27,11 @@ void FrameBufferWrapper::SetTexColorBuffer(GLuint tex) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0); LOGOPENGLERROR();
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 }
+
+void FrameBufferWrapper::Bind() {
+    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer); LOGOPENGLERROR();
+}
+
+void FrameBufferWrapper::Unbind() {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
+}

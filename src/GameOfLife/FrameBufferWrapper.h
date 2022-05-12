@@ -9,7 +9,8 @@ public:
 
     void SetTexColorBuffer(GLuint tex);
 
-    GLuint GetFrameBuffer() const { return frameBuffer; }
+    void Bind();
+    static void Unbind();
 
 private:
     GLuint frameBuffer = 0;
