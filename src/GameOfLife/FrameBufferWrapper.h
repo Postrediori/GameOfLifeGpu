@@ -10,9 +10,10 @@ public:
     void SetTexColorBuffer(GLuint tex);
 
     void Bind();
-    static void Unbind();
+    void Unbind();
 
 private:
     GLuint frameBuffer = 0;
     GLuint texColorBuffer = 0;
+    bool isBound = false;
 };
