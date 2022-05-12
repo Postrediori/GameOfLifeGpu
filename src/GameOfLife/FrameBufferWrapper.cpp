@@ -17,7 +17,10 @@ bool FrameBufferWrapper::Init() {
 }
 
 void FrameBufferWrapper::Release() {
-    glDeleteFramebuffers(1, &frameBuffer); LOGOPENGLERROR();
+    if (frameBuffer) {
+        glDeleteFramebuffers(1, &frameBuffer); LOGOPENGLERROR();
+        frameBuffer = 0;
+    }
 }
 
 void FrameBufferWrapper::SetTexColorBuffer(GLuint tex) {
