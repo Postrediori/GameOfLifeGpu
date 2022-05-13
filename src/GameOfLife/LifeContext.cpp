@@ -139,7 +139,6 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
         return false;
     }
 
-    //screenRenderer.SetTexture(nextGenerationTex);
     screenRenderer.Resize(width, height);
 
     // Init framebuffer
@@ -162,7 +161,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
 
 void LifeContext::InitFirstGeneration() {
     generationCounter = 0;
-    
+
     automataInitialRenderer.SetTime(glfwGetTime());
 
     glUseProgram(automataInitProgram); LOGOPENGLERROR();
@@ -440,10 +439,30 @@ void LifeContext::Keyboard(GLFWwindow* window, int key, int /*scancode*/, int ac
     LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
     assert(context);
 
-    static bool gFullscreen = false;
+    static struct {
+        bool fullscreen{ false };
+        int savedXPos{ 0 }, savedYPos{ 0 };
+        int savedWidth{ 0 }, savedHeight{ 0 };
 
-    static int gSavedXPos = 0, gSavedYPos = 0;
-    static int gSavedWidth = 0, gSavedHeight = 0;
+        void ToggleFullscreen(GLFWwindow* window) {
+            fullscreen = !fullscreen;
+
+            if (fullscreen) {
+                glfwGetWindowPos(window, &savedXPos, &savedYPos);
+                glfwGetWindowSize(window, &savedWidth, &savedHeight);
+
+                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+                glfwSetWindowMonitor(window, monitor, 0, 0,
+                    mode->width, mode->height, mode->refreshRate);
+            }
+            else {
+                glfwSetWindowMonitor(window, nullptr, savedXPos, savedYPos,
+                    savedWidth, savedHeight, GLFW_DONT_CARE);
+            }
+
+        }
+    } gScreenState;
 
     if (action == GLFW_PRESS) {
         switch (key) {
@@ -452,20 +471,7 @@ void LifeContext::Keyboard(GLFWwindow* window, int key, int /*scancode*/, int ac
             break;
 
         case GLFW_KEY_F1:
-            gFullscreen = !gFullscreen;
-            if (gFullscreen) {
-                glfwGetWindowPos(window, &gSavedXPos, &gSavedYPos);
-                glfwGetWindowSize(window, &gSavedWidth, &gSavedHeight);
-
-                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-                glfwSetWindowMonitor(window, monitor, 0, 0,
-                    mode->width, mode->height, mode->refreshRate);
-            }
-            else {
-                glfwSetWindowMonitor(window, nullptr, gSavedXPos, gSavedYPos,
-                    gSavedWidth, gSavedHeight, GLFW_DONT_CARE);
-            }
+            gScreenState.ToggleFullscreen(window);
             break;
 
         case GLFW_KEY_SPACE:
