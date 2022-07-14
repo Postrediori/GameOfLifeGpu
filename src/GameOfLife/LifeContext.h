@@ -6,7 +6,6 @@ public:
 
     bool Init(int width, int height, int textureSize);
 
-    void Reshape(int width, int height);
     void Display();
     void Update();
 
@@ -15,9 +14,13 @@ public:
     void MouseDown(int x, int y);
     void SetActivity(hmm_vec2 pos);
 
-    static void Reshape(GLFWwindow* window, int width, int height);
-    static void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/);
-    static void Mouse(GLFWwindow* window, int button, int action, int /*mods*/);
+    void Reshape(int width, int height);
+    void Keyboard(int key, int /*scancode*/, int action, int /*mods*/);
+    void Mouse(int button, int action, int /*mods*/);
+
+    static void ReshapeCallback(GLFWwindow* window, int width, int height);
+    static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void MouseCallback(GLFWwindow* window, int button, int action, int mods);
 
 private:
     bool InitTextures(int newSize);
@@ -32,6 +35,8 @@ private:
     void SetModelSize(int newSize);
     void SetAutomatonRules(CellularAutomata::AutomatonRules newRules);
     void SetFirstGenerationType(CellularAutomata::FirstGenerationType newType);
+
+    void RegisterCallbacks();
 
 private:
     GLFWwindow* window = nullptr;

@@ -107,12 +107,6 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
 
     glfwSetWindowUserPointer(this->window, static_cast<void *>(this));
 
-    // Setup of ImGui visual style
-    ImGui::StyleColorsLight();
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.WindowRounding = 0.0f;
-    style.WindowBorderSize = 0.0f;
-
     // Init default rules
     currentRules = std::get<2>(AutomatonRules[0]);
     firstGenerationType = CellularAutomata::FirstGenerationType::RadialRandom;
@@ -181,6 +175,8 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     // Init textures and create first generation
     SetModelSize(texSize);
 
+    RegisterCallbacks();
+
     return true;
 }
 
@@ -219,6 +215,18 @@ void LifeContext::SetAutomatonRules(CellularAutomata::AutomatonRules newRules) {
 void LifeContext::SetFirstGenerationType(CellularAutomata::FirstGenerationType newType) {
     this->firstGenerationType = newType;
     this->NeedDataInit();
+}
+
+void LifeContext::RegisterCallbacks() {
+    glfwSetWindowUserPointer(window, static_cast<void*>(this));
+
+    glfwSetKeyCallback(window, LifeContext::KeyboardCallback);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+
+    glfwSetWindowSizeCallback(window, LifeContext::ReshapeCallback);
+
+    glfwSetMouseButtonCallback(window, LifeContext::MouseCallback);
+    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 }
 
 void LifeContext::Reshape(int newWidth, int newHeight) {
@@ -437,17 +445,7 @@ void LifeContext::SetActivity(hmm_vec2 pos) {
     activityPos = pos;
 }
 
-void LifeContext::Reshape(GLFWwindow* window, int width, int height) {
-    LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
-    assert(context);
-
-    context->Reshape(width, height);
-}
-
-void LifeContext::Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
-    LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
-    assert(context);
-
+void LifeContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/) {
     static struct {
         bool fullscreen{ false };
         int savedXPos{ 0 }, savedYPos{ 0 };
@@ -484,35 +482,53 @@ void LifeContext::Keyboard(GLFWwindow* window, int key, int /*scancode*/, int ac
             break;
 
         case GLFW_KEY_SPACE:
-            context->NeedDataInit();
+            NeedDataInit();
             break;
 
         case GLFW_KEY_1:
-            context->SetModelSize(std::get<1>(ModelSizes[0]));
+            SetModelSize(std::get<1>(ModelSizes[0]));
             break;
 
         case GLFW_KEY_2:
-            context->SetModelSize(std::get<1>(ModelSizes[1]));
+            SetModelSize(std::get<1>(ModelSizes[1]));
             break;
 
         case GLFW_KEY_3:
-            context->SetModelSize(std::get<1>(ModelSizes[2]));
+            SetModelSize(std::get<1>(ModelSizes[2]));
             break;
 
         case GLFW_KEY_4:
-            context->SetModelSize(std::get<1>(ModelSizes[3]));
+            SetModelSize(std::get<1>(ModelSizes[3]));
             break;
         }
     }
 }
 
-void LifeContext::Mouse(GLFWwindow* window, int button, int action, int /*mods*/) {
+void LifeContext::Mouse(int button, int action, int /*mods*/) {
+    if (action == GLFW_PRESS) {
+        if (button == GLFW_MOUSE_BUTTON_2) {
+            NeedDataInit();
+        }
+    }
+}
+
+void LifeContext::ReshapeCallback(GLFWwindow* window, int width, int height) {
     LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
     assert(context);
 
-    if (action == GLFW_PRESS) {
-        if (button == GLFW_MOUSE_BUTTON_2) {
-            context->NeedDataInit();
-        }
-    }
+    context->Reshape(width, height);
+}
+
+void LifeContext::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
+    assert(context);
+
+    context->Keyboard(key, scancode, action, mods);
+}
+
+void LifeContext::MouseCallback(GLFWwindow* window, int button, int action, int mods) {
+    LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
+    assert(context);
+
+    context->Mouse(button, action, mods);
 }
