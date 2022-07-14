@@ -5,23 +5,23 @@
 
 namespace GraphicsUtils {
 
-auto unique_texture::close() -> void {
+void unique_texture::close() {
     glDeleteTextures(1, &resourceId_); LOGOPENGLERROR();
 }
 
-auto unique_framebuffer::close() -> void {
+void unique_framebuffer::close() {
     glDeleteFramebuffers(1, &resourceId_); LOGOPENGLERROR();
 }
 
-auto unique_program::close() -> void {
+void unique_program::close() {
     glDeleteProgram(resourceId_); LOGOPENGLERROR();
 }
 
-auto unique_vertex_array::close() -> void {
+void unique_vertex_array::close() {
     glDeleteVertexArrays(1, &resourceId_); LOGOPENGLERROR();
 }
 
-auto unique_buffer::close() -> void {
+void unique_buffer::close() {
     glDeleteBuffers(1, &resourceId_); LOGOPENGLERROR();
 }
 

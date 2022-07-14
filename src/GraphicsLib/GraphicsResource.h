@@ -13,22 +13,22 @@ namespace GraphicsUtils {
         }
 
         // Copying constructor
-        unique_any(unique_any&& other)
+        unique_any(unique_any&& other) noexcept
             : resourceId_(other.resourceId_) {
             other.resourceId_ = 0;
         }
 
         // Swap resources between smart pointers
-        auto swap(unique_any& other) -> void {
+        void swap(unique_any& other) {
             std::swap(resourceId_, other.resourceId_);
         }
 
-        auto swap(unique_any& left, unique_any& right) -> void {
+        void swap(unique_any& left, unique_any& right) {
             left.swap(right);
         }
 
         // Retireve the resource
-        auto get() const -> GLuint {
+        GLuint get() const {
             return resourceId_;
         }
 
@@ -38,7 +38,7 @@ namespace GraphicsUtils {
         }
 
         // Check validity of the resource
-        auto is_valid() const -> bool {
+        bool is_valid() const {
             return (resourceId_ != 0);
         }
 
@@ -48,7 +48,7 @@ namespace GraphicsUtils {
         }
 
         // Free or free+replace the resource
-        auto reset(GLuint textureId = 0) -> void {
+        void reset(GLuint textureId = 0) {
             if (is_valid()) {
                 close();
             }
@@ -56,19 +56,19 @@ namespace GraphicsUtils {
         }
 
         // Detach resource from the pointer without freeing
-        auto release() -> GLuint {
+        GLuint release() {
             auto t = resourceId_;
             resourceId_ = 0;
             return t;
         }
 
         // Return the address of the internal resource for out parameter use
-        auto addressof() -> GLuint* {
+        GLuint* addressof() {
             return &resourceId_;
         }
 
-        // Same as previous but also frees any currently-held resource
-        auto put() -> GLuint* {
+        // Same as previous
+        GLuint* put() {
             reset();
             return addressof();
         }
@@ -79,28 +79,28 @@ namespace GraphicsUtils {
         }
 
         // Actual deallocation of resource
-        virtual auto close() -> void { }
+        virtual void close() { }
 
         GLuint resourceId_{ 0 };
     };
 
     struct unique_texture : public unique_any {
-        auto close() -> void;
+        void close();
     };
 
     struct unique_framebuffer : public unique_any {
-        auto close() -> void;
+        void close();
     };
 
     struct unique_program : public unique_any {
-        auto close() -> void;
+        void close();
     };
 
     struct unique_vertex_array : public unique_any {
-        auto close() -> void;
+        void close();
     };
 
     struct unique_buffer : public unique_any {
-        auto close() -> void;
+        void close();
     };
 }
