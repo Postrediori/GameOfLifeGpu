@@ -99,7 +99,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     firstGenerationType = CellularAutomata::FirstGenerationType::RadialRandom;
 
     // CA simulation
-    if (!Shader::createProgram(automataProgram, BufferRendererVert, BufferRendererFrag)) {
+    if ((automataProgram = Shader::CreateProgram(BufferRendererVert, BufferRendererFrag)) == 0) {
         LOGE << "Failed to init shader program for cellular automata";
         return false;
     }
@@ -116,7 +116,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     }
 
     // CA init data
-    if (!Shader::createProgram(automataInitProgram, InitialDataVert, InitialDataFrag)) {
+    if ((automataInitProgram = Shader::CreateProgram(InitialDataVert, InitialDataFrag)) == 0) {
         LOGE << "Failed to init shader program for initial state of cellular automata";
         return false;
     }
@@ -129,7 +129,7 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     }
 
     // Screen renderer
-    if (!Shader::createProgram(screenProgram, ScreenRendererVert, ScreenRendererFrag)) {
+    if ((screenProgram = Shader::CreateProgram(ScreenRendererVert, ScreenRendererFrag)) == 0) {
         LOGE << "Failed to init shader program for screen rendering";
         return false;
     }
