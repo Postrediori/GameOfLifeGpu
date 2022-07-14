@@ -1,19 +1,5 @@
 #pragma once
 
-namespace CellularAutomata {
-    struct AutomatonRules {
-        int id;
-        int birth;
-        int survive;
-    };
-
-    enum class FirstGenerationType {
-        Empty = 0,
-        UniformRandom = 1,
-        RadialRandom = 2,
-    };
-}
-
 class LifeContext {
 public:
     LifeContext(GLFWwindow* w);
@@ -77,9 +63,10 @@ private:
 
     bool needDataInit = false;
 
-    CellularAutomata::AutomatonRules currentRules;
-    CellularAutomata::FirstGenerationType firstGenerationType;
+    CellularAutomata::AutomatonRules currentRules{ 0 };
+    CellularAutomata::FirstGenerationType firstGenerationType{
+        CellularAutomata::FirstGenerationType::Empty };
 
     bool needSetActivity = false;
-    hmm_vec2 activityPos;
+    hmm_vec2 activityPos = { 0 };
 };

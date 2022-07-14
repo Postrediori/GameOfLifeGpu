@@ -3,6 +3,7 @@
 #include "GraphicsResource.h"
 #include "Shader.h"
 #include "PlanarTextureRenderer.h"
+#include "CellularAutomata.h"
 #include "LifeContext.h"
 
 static const double UiWidth = 250.0;

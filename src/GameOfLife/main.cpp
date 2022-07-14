@@ -4,6 +4,7 @@
 #include "GraphicsResource.h"
 #include "LogFormatter.h"
 #include "PlanarTextureRenderer.h"
+#include "CellularAutomata.h"
 #include "LifeContext.h"
 
 static const int Width = 800;
