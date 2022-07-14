@@ -7,7 +7,7 @@
 #endif
 
 namespace GraphicsUtils {
+
     void LogOpenGLError(const char *file, int line);
 
-    GLuint InitTexture(GLenum format, GLsizei size, GLenum filter, GLenum wrap);
 }

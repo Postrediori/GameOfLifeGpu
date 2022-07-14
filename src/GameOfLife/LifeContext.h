@@ -60,8 +60,8 @@ private:
 
     int textureSize = 0;
 
-    GLuint currentGenerationTex = 0;
-    GLuint nextGenerationTex = 0;
+    GraphicsUtils::unique_texture currentGenerationTex;
+    GraphicsUtils::unique_texture nextGenerationTex;
 
     GLuint automataProgram = 0;
     GLint uRulesBirth = -1, uRulesSurvive = -1;

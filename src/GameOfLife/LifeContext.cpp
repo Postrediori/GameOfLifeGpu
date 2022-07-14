@@ -54,6 +54,19 @@ static const std::vector<std::tuple<std::string, CellularAutomata::FirstGenerati
     {"Uniform Random", CellularAutomata::FirstGenerationType::UniformRandom},
 };
 
+auto InitTexture(GLuint tex, GLenum format, GLsizei size, GLenum filter, GLenum wrap) -> void {
+    glBindTexture(GL_TEXTURE_2D, tex); LOGOPENGLERROR();
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+        size, size,
+        0, format, GL_UNSIGNED_BYTE, nullptr); LOGOPENGLERROR();
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter); LOGOPENGLERROR();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter); LOGOPENGLERROR();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap); LOGOPENGLERROR();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap); LOGOPENGLERROR();
+}
+
 LifeContext::LifeContext(GLFWwindow* w)
     : window(w) {
 }
@@ -67,15 +80,24 @@ bool LifeContext::InitTextures(int newSize) {
 
     textureSize = newSize;
 
-    currentGenerationTex = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
-    if (!currentGenerationTex) {
-        return false;
-    }
+    GLuint tex{ 0 };
 
-    nextGenerationTex = GraphicsUtils::InitTexture(GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
-    if (!nextGenerationTex) {
+    glGenTextures(1, &tex); LOGOPENGLERROR();
+    if (tex == 0) {
+        LOGE << "Failed to init texture";
         return false;
     }
+    currentGenerationTex.reset(tex);
+
+    glGenTextures(1, &tex); LOGOPENGLERROR();
+    if (tex == 0) {
+        LOGE << "Failed to init texture";
+        return false;
+    }
+    nextGenerationTex.reset(tex);
+
+    InitTexture(currentGenerationTex.get(), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
+    InitTexture(nextGenerationTex.get(), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
 
     return true;
 }
@@ -172,7 +194,7 @@ void LifeContext::InitFirstGeneration() {
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex, 0); LOGOPENGLERROR();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex.get(), 0); LOGOPENGLERROR();
 
     automataInitialRenderer.AdjustViewport();
     automataInitialRenderer.Render();
@@ -226,14 +248,8 @@ void LifeContext::Release() {
 }
 
 void LifeContext::ReleaseTextures() {
-    if (currentGenerationTex) {
-        glDeleteTextures(1, &currentGenerationTex); LOGOPENGLERROR();
-        currentGenerationTex = 0;
-    }
-    if (nextGenerationTex) {
-        glDeleteTextures(1, &nextGenerationTex); LOGOPENGLERROR();
-        currentGenerationTex = 0;
-    }
+    currentGenerationTex.reset();
+    nextGenerationTex.reset();
 }
 
 void LifeContext::Update() {
@@ -297,18 +313,16 @@ void LifeContext::CalcNextGeneration() {
 
 void LifeContext::SwapGenerations() {
     // Swap IDs
-    GLuint temp = nextGenerationTex;
-    nextGenerationTex = currentGenerationTex;
-    currentGenerationTex = temp;
+    nextGenerationTex.swap(currentGenerationTex);
 
     // Swap IDs in the renderer objects
-    automataRenderer.SetTexture(currentGenerationTex);
+    automataRenderer.SetTexture(currentGenerationTex.get());
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex, 0); LOGOPENGLERROR();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex.get(), 0); LOGOPENGLERROR();
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
-    screenRenderer.SetTexture(nextGenerationTex);
+    screenRenderer.SetTexture(nextGenerationTex.get());
 }
 
 void LifeContext::Display() {

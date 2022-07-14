@@ -24,7 +24,7 @@ namespace GraphicsUtils {
         }
 
         auto swap(unique_any& left, unique_any& right) -> void {
-            std::swap(left.resourceId_, right.resourceId_);
+            left.swap(right);
         }
 
         // Retireve the resource
