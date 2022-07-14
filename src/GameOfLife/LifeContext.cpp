@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "GraphicsLogger.h"
+#include "GraphicsResource.h"
 #include "Shader.h"
 #include "PlanarTextureRenderer.h"
-#include "FrameBufferWrapper.h"
 #include "LifeContext.h"
 
 static const double UiWidth = 250.0;
@@ -142,10 +142,13 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     screenRenderer.Resize(width, height);
 
     // Init framebuffer
-    if (!frameBuffer.Init()) {
+    GLuint fb{ 0 };
+    glGenFramebuffers(1, &fb); LOGOPENGLERROR();
+    if (fb == 0) {
         LOGE << "Failed to init framebuffer";
         return false;
     }
+    frameBuffer.reset(fb);
 
     // Setup OpenGL flags
     glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
@@ -167,12 +170,14 @@ void LifeContext::InitFirstGeneration() {
     glUseProgram(automataInitProgram); LOGOPENGLERROR();
     glUniform1i(uInitType, static_cast<int>(firstGenerationType)); LOGOPENGLERROR();
 
-    frameBuffer.SetTexColorBuffer(nextGenerationTex);
+    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
 
-    frameBuffer.Bind();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex, 0); LOGOPENGLERROR();
+
     automataInitialRenderer.AdjustViewport();
     automataInitialRenderer.Render();
-    frameBuffer.Unbind();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 }
 
 void LifeContext::SetModelSize(int newSize) {
@@ -267,7 +272,7 @@ void LifeContext::Update() {
 }
 
 void LifeContext::CalcNextGeneration() {
-    frameBuffer.Bind();
+    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
 
     glUseProgram(automataProgram); LOGOPENGLERROR();
     glUniform1i(uRulesBirth, currentRules.birth); LOGOPENGLERROR();
@@ -285,7 +290,7 @@ void LifeContext::CalcNextGeneration() {
     automataRenderer.AdjustViewport();
     automataRenderer.Render();
 
-    frameBuffer.Unbind();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
     generationCounter++;
 }
@@ -298,7 +303,10 @@ void LifeContext::SwapGenerations() {
 
     // Swap IDs in the renderer objects
     automataRenderer.SetTexture(currentGenerationTex);
-    frameBuffer.SetTexColorBuffer(nextGenerationTex);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex, 0); LOGOPENGLERROR();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
     screenRenderer.SetTexture(nextGenerationTex);
 }

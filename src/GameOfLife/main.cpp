@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "ScopeGuard.h"
 #include "GraphicsLogger.h"
+#include "GraphicsResource.h"
 #include "LogFormatter.h"
 #include "PlanarTextureRenderer.h"
-#include "FrameBufferWrapper.h"
 #include "LifeContext.h"
 
 static const int Width = 800;

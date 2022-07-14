@@ -75,7 +75,7 @@ private:
     GLuint screenProgram = 0;
     PlanarTextureRenderer screenRenderer;
 
-    FrameBufferWrapper frameBuffer;
+    GraphicsUtils::unique_framebuffer frameBuffer;
 
     bool needDataInit = false;
 
