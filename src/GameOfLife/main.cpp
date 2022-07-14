@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ScopeGuard.h"
-#include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
 #include "LogFormatter.h"
 #include "PlanarTextureRenderer.h"
 #include "FrameBufferWrapper.h"

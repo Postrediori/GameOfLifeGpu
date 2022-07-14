@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
 #include "Shader.h"
 #include "PlanarTextureRenderer.h"
 #include "FrameBufferWrapper.h"
