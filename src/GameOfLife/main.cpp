@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "ScopeGuard.h"
 #include "GraphicsLogger.h"
 #include "GraphicsResource.h"
 #include "LogFormatter.h"
