@@ -95,4 +95,12 @@ namespace GraphicsUtils {
     struct unique_program : public unique_any {
         auto close() -> void;
     };
+
+    struct unique_vertex_array : public unique_any {
+        auto close() -> void;
+    };
+
+    struct unique_buffer : public unique_any {
+        auto close() -> void;
+    };
 }

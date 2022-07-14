@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "GraphicsLogger.h"
-#include "Shader.h"
+#include "GraphicsResource.h"
 #include "PlanarTextureRenderer.h"
 
 static const hmm_vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
@@ -17,10 +17,6 @@ static const std::vector<GLuint> PlaneIndices = {
     2, 1, 3,
 };
 
-PlanarTextureRenderer::~PlanarTextureRenderer() {
-    Release();
-}
-
 bool PlanarTextureRenderer::Init(GLuint p) {
     program = p;
 
@@ -31,31 +27,39 @@ bool PlanarTextureRenderer::Init(GLuint p) {
 
     mvp = HMM_Orthographic(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
 
+    GLuint id{ 0 };
+
     // Init VAO
-    glGenVertexArrays(1, &vao); LOGOPENGLERROR();
-    if (!vao) {
+    glGenVertexArrays(1, &id); LOGOPENGLERROR();
+    if (id == 0) {
         LOGE << "Failed to create VAO for planar texture";
         return false;
     }
-    glBindVertexArray(vao); LOGOPENGLERROR();
+    vao.reset(id);
+
+    glBindVertexArray(vao.get()); LOGOPENGLERROR();
 
     // Init VBO
-    glGenBuffers(1, &vbo); LOGOPENGLERROR();
-    if (!vbo) {
+    glGenBuffers(1, &id); LOGOPENGLERROR();
+    if (id == 0) {
         LOGE << "Failed to create VBO for planar texture";
         return false;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
+    vbo.reset(id);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * PlaneVertices.size(),
         PlaneVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init indices VBO
-    glGenBuffers(1, &indVbo); LOGOPENGLERROR();
-    if (!indVbo) {
+    glGenBuffers(1, &id); LOGOPENGLERROR();
+    if (id == 0) {
         LOGE << "Failed to create indices VBO";
         return false;
     }
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo); LOGOPENGLERROR();
+    indVbo.reset(id);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo.get()); LOGOPENGLERROR();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * PlaneIndices.size(), PlaneIndices.data(),
         GL_STATIC_DRAW); LOGOPENGLERROR();
 
@@ -88,14 +92,6 @@ void PlanarTextureRenderer::SetMvp(hmm_mat4 newMvp) {
     mvp = newMvp;
 }
 
-void PlanarTextureRenderer::Release() {
-    glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
-    vao = 0;
-
-    glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
-    vbo = 0;
-}
-
 void PlanarTextureRenderer::Resize(int newWidth, int newHeight) {
     width = newWidth;
     height = newHeight;
@@ -107,7 +103,7 @@ void PlanarTextureRenderer::AdjustViewport() {
 
 void PlanarTextureRenderer::Render() {
     glUseProgram(program); LOGOPENGLERROR();
-    glBindVertexArray(vao); LOGOPENGLERROR();
+    glBindVertexArray(vao.get()); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();

@@ -2,10 +2,9 @@
 
 class PlanarTextureRenderer {
 public:
-    ~PlanarTextureRenderer();
+    PlanarTextureRenderer() = default;
 
     bool Init(GLuint program);
-    void Release();
     void Resize(int newWidth, int newHeight);
     void Render();
 
@@ -24,8 +23,8 @@ private:
     GLuint program = 0;
     GLint uRes = -1, uMvp = -1, uTex = -1, uTime = -1;
 
-    GLuint vao = 0;
-    GLuint vbo = 0, indVbo = 0;
+    GraphicsUtils::unique_vertex_array vao;
+    GraphicsUtils::unique_buffer vbo, indVbo;
 
     hmm_mat4 mvp;
 };
