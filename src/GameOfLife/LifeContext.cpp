@@ -71,10 +71,6 @@ LifeContext::LifeContext(GLFWwindow* w)
     : window(w) {
 }
 
-LifeContext::~LifeContext() {
-    Release();
-}
-
 bool LifeContext::InitTextures(int newSize) {
     ReleaseTextures();
 
@@ -121,42 +117,45 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     firstGenerationType = CellularAutomata::FirstGenerationType::RadialRandom;
 
     // CA simulation
-    if ((automataProgram = Shader::CreateProgram(BufferRendererVert, BufferRendererFrag)) == 0) {
+    automataProgram.reset(Shader::CreateProgram(BufferRendererVert, BufferRendererFrag));
+    if (!automataProgram) {
         LOGE << "Failed to init shader program for cellular automata";
         return false;
     }
 
-    uRulesBirth = glGetUniformLocation(automataProgram, "rules.birth"); LOGOPENGLERROR();
-    uRulesSurvive = glGetUniformLocation(automataProgram, "rules.survive"); LOGOPENGLERROR();
+    uRulesBirth = glGetUniformLocation(automataProgram.get(), "rules.birth"); LOGOPENGLERROR();
+    uRulesSurvive = glGetUniformLocation(automataProgram.get(), "rules.survive"); LOGOPENGLERROR();
 
-    uNeedSetActivity = glGetUniformLocation(automataProgram, "needSetActivity"); LOGOPENGLERROR();
-    uActivityPos = glGetUniformLocation(automataProgram, "activityPos"); LOGOPENGLERROR();
+    uNeedSetActivity = glGetUniformLocation(automataProgram.get(), "needSetActivity"); LOGOPENGLERROR();
+    uActivityPos = glGetUniformLocation(automataProgram.get(), "activityPos"); LOGOPENGLERROR();
 
-    if (!automataRenderer.Init(automataProgram)) {
+    if (!automataRenderer.Init(automataProgram.get())) {
         LOGE << "Failed to init texture renderer for frame buffer";
         return false;
     }
 
     // CA init data
-    if ((automataInitProgram = Shader::CreateProgram(InitialDataVert, InitialDataFrag)) == 0) {
+    automataInitProgram.reset(Shader::CreateProgram(InitialDataVert, InitialDataFrag));
+    if (!automataInitProgram) {
         LOGE << "Failed to init shader program for initial state of cellular automata";
         return false;
     }
 
-    uInitType = glGetUniformLocation(automataInitProgram, "initType"); LOGOPENGLERROR();
+    uInitType = glGetUniformLocation(automataInitProgram.get(), "initType"); LOGOPENGLERROR();
 
-    if (!automataInitialRenderer.Init(automataInitProgram)) {
+    if (!automataInitialRenderer.Init(automataInitProgram.get())) {
         LOGE << "Failed to setup initial cellular automata data creator";
         return false;
     }
 
     // Screen renderer
-    if ((screenProgram = Shader::CreateProgram(ScreenRendererVert, ScreenRendererFrag)) == 0) {
+    screenProgram.reset(Shader::CreateProgram(ScreenRendererVert, ScreenRendererFrag));
+    if (!screenProgram) {
         LOGE << "Failed to init shader program for screen rendering";
         return false;
     }
 
-    if (!screenRenderer.Init(screenProgram)) {
+    if (!screenRenderer.Init(screenProgram.get())) {
         LOGE << "Failed to init processed texture renderer";
         return false;
     }
@@ -189,7 +188,7 @@ void LifeContext::InitFirstGeneration() {
 
     automataInitialRenderer.SetTime(glfwGetTime());
 
-    glUseProgram(automataInitProgram); LOGOPENGLERROR();
+    glUseProgram(automataInitProgram.get()); LOGOPENGLERROR();
     glUniform1i(uInitType, static_cast<int>(firstGenerationType)); LOGOPENGLERROR();
 
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
@@ -232,19 +231,6 @@ void LifeContext::Reshape(int newWidth, int newHeight) {
 
     screenRenderer.Resize(widthWithoutUi, height);
     screenRenderer.SetMvp(screenMvp);
-}
-
-void LifeContext::Release() {
-    ReleaseTextures();
-
-    if (automataProgram) {
-        glDeleteProgram(automataProgram); LOGOPENGLERROR();
-        automataProgram = 0;
-    }
-    if (automataInitProgram) {
-        glDeleteProgram(automataInitProgram); LOGOPENGLERROR();
-        automataInitProgram = 0;
-    }
 }
 
 void LifeContext::ReleaseTextures() {
@@ -290,7 +276,7 @@ void LifeContext::Update() {
 void LifeContext::CalcNextGeneration() {
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
 
-    glUseProgram(automataProgram); LOGOPENGLERROR();
+    glUseProgram(automataProgram.get()); LOGOPENGLERROR();
     glUniform1i(uRulesBirth, currentRules.birth); LOGOPENGLERROR();
     glUniform1i(uRulesSurvive, currentRules.survive); LOGOPENGLERROR();
 

@@ -91,4 +91,8 @@ namespace GraphicsUtils {
     struct unique_framebuffer : public unique_any {
         auto close() -> void;
     };
+
+    struct unique_program : public unique_any {
+        auto close() -> void;
+    };
 }

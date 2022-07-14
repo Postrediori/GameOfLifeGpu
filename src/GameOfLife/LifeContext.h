@@ -17,7 +17,6 @@ namespace CellularAutomata {
 class LifeContext {
 public:
     LifeContext(GLFWwindow* w);
-    ~LifeContext();
 
     bool Init(int width, int height, int textureSize);
 
@@ -37,7 +36,6 @@ public:
 private:
     bool InitTextures(int newSize);
     void ReleaseTextures();
-    void Release();
 
     void InitFirstGeneration();
     void CalcNextGeneration();
@@ -63,16 +61,16 @@ private:
     GraphicsUtils::unique_texture currentGenerationTex;
     GraphicsUtils::unique_texture nextGenerationTex;
 
-    GLuint automataProgram = 0;
+    GraphicsUtils::unique_program automataProgram;
     GLint uRulesBirth = -1, uRulesSurvive = -1;
     GLint uNeedSetActivity = -1, uActivityPos = -1;
     PlanarTextureRenderer automataRenderer;
 
-    GLuint automataInitProgram = 0;
+    GraphicsUtils::unique_program automataInitProgram;
     GLint uInitType = -1;
     PlanarTextureRenderer automataInitialRenderer;
 
-    GLuint screenProgram = 0;
+    GraphicsUtils::unique_program screenProgram;
     PlanarTextureRenderer screenRenderer;
 
     GraphicsUtils::unique_framebuffer frameBuffer;
