@@ -27,37 +27,32 @@ bool PlanarTextureRenderer::Init(GLuint p) {
 
     mvp = HMM_Orthographic(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
 
-    GLuint id{ 0 };
-
     // Init VAO
-    glGenVertexArrays(1, &id); LOGOPENGLERROR();
-    if (id == 0) {
+    glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
+    if (!vao) {
         LOGE << "Failed to create VAO for planar texture";
         return false;
     }
-    vao.reset(id);
 
     glBindVertexArray(vao.get()); LOGOPENGLERROR();
 
     // Init VBO
-    glGenBuffers(1, &id); LOGOPENGLERROR();
-    if (id == 0) {
+    glGenBuffers(1, vbo.put()); LOGOPENGLERROR();
+    if (!vbo) {
         LOGE << "Failed to create VBO for planar texture";
         return false;
     }
-    vbo.reset(id);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * PlaneVertices.size(),
         PlaneVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init indices VBO
-    glGenBuffers(1, &id); LOGOPENGLERROR();
-    if (id == 0) {
+    glGenBuffers(1, indVbo.put()); LOGOPENGLERROR();
+    if (!indVbo) {
         LOGE << "Failed to create indices VBO";
         return false;
     }
-    indVbo.reset(id);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo.get()); LOGOPENGLERROR();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * PlaneIndices.size(), PlaneIndices.data(),

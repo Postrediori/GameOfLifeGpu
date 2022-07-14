@@ -77,21 +77,17 @@ bool LifeContext::InitTextures(int newSize) {
 
     textureSize = newSize;
 
-    GLuint tex{ 0 };
-
-    glGenTextures(1, &tex); LOGOPENGLERROR();
-    if (tex == 0) {
+    glGenTextures(1, currentGenerationTex.put()); LOGOPENGLERROR();
+    if (!currentGenerationTex) {
         LOGE << "Failed to init texture";
         return false;
     }
-    currentGenerationTex.reset(tex);
 
-    glGenTextures(1, &tex); LOGOPENGLERROR();
-    if (tex == 0) {
+    glGenTextures(1, nextGenerationTex.put()); LOGOPENGLERROR();
+    if (!nextGenerationTex) {
         LOGE << "Failed to init texture";
         return false;
     }
-    nextGenerationTex.reset(tex);
 
     InitTexture(currentGenerationTex.get(), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
     InitTexture(nextGenerationTex.get(), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
@@ -158,13 +154,11 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     screenRenderer.Resize(width, height);
 
     // Init framebuffer
-    GLuint fb{ 0 };
-    glGenFramebuffers(1, &fb); LOGOPENGLERROR();
-    if (fb == 0) {
+    glGenFramebuffers(1, frameBuffer.put()); LOGOPENGLERROR();
+    if (!frameBuffer) {
         LOGE << "Failed to init framebuffer";
         return false;
     }
-    frameBuffer.reset(fb);
 
     // Setup OpenGL flags
     glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
