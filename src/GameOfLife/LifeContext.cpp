@@ -340,17 +340,20 @@ void LifeContext::DisplayUi() {
     ImGui::Text("Model size:");
 
     int iModelSize = textureSize;
-    size_t k = 0;
+    bool first = true;
     for (const auto& s : ModelSizes) {
         std::string name;
         int size;
         std::tie(name, size) = s;
 
+        if (first) {
+            first = false;
+        }
+        else {
+            ImGui::SameLine();
+        }
         if (ImGui::RadioButton(name.c_str(), &iModelSize, size)) {
             SetModelSize(iModelSize);
-        }
-        if (k++ < (ModelSizes.size() - 1)) {
-            ImGui::SameLine();
         }
     }
 
