@@ -4,22 +4,23 @@
 #include "Shader.h"
 #include "PlanarTextureRenderer.h"
 #include "CellularAutomata.h"
+#include "ResourceFinder.h"
 #include "LifeContext.h"
 
-static const double UiWidth = 250.0;
+constexpr double UiWidth = 250.0;
 
-static const std::string BufferRendererVert = "data/life.vert";
-static const std::string BufferRendererFrag = "data/life.frag";
+const std::filesystem::path BufferRendererVert = "life.vert";
+const std::filesystem::path BufferRendererFrag = "life.frag";
 
-static const std::string InitialDataVert = BufferRendererVert;
-static const std::string InitialDataFrag = "data/life-init.frag";
+const std::filesystem::path InitialDataVert = BufferRendererVert;
+const std::filesystem::path InitialDataFrag = "life-init.frag";
 
-static const std::string ScreenRendererVert = "data/screen-plane.vert";
-static const std::string ScreenRendererFrag = "data/screen-plane.frag";
+const std::filesystem::path ScreenRendererVert = "screen-plane.vert";
+const std::filesystem::path ScreenRendererFrag = "screen-plane.frag";
 
-static const HMM_Vec4 ScreenArea = { -1.0, 1.0, -1.0, 1.0 };
+const HMM_Vec4 ScreenArea = { -1.0, 1.0, -1.0, 1.0 };
 
-static const std::vector<std::tuple<std::string, int>> ModelSizes = {
+const std::vector<std::tuple<std::string, int>> ModelSizes = {
     {"128", 128},
     {"256", 256},
     {"512", 512},
@@ -95,7 +96,13 @@ bool LifeContext::InitTextures(int newSize) {
     return true;
 }
 
-bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
+bool LifeContext::Init(int /*argc*/, const char* argv[], int newWidth, int newHeight, int texSize) {
+    std::filesystem::path moduleDataDir;
+    if (!Utils::ResourceFinder::GetDataDirectory(argv[0], moduleDataDir)) {
+        LOGE << "Unable to find data directory";
+        return false;
+    }
+
     LOGI << "OpenGL Renderer : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
@@ -108,7 +115,9 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     firstGenerationType = CellularAutomata::FirstGenerationType::RadialRandom;
 
     // CA simulation
-    automataProgram.reset(Shader::CreateProgram(BufferRendererVert, BufferRendererFrag));
+    auto bufferRendererVert = (moduleDataDir / BufferRendererVert).string();
+    auto bufferRendererFrag = (moduleDataDir / BufferRendererFrag).string();
+    automataProgram.reset(Shader::CreateProgram(bufferRendererVert, bufferRendererFrag));
     if (!automataProgram) {
         LOGE << "Failed to init shader program for cellular automata";
         return false;
@@ -126,7 +135,9 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     }
 
     // CA init data
-    automataInitProgram.reset(Shader::CreateProgram(InitialDataVert, InitialDataFrag));
+    auto initialDataVert = (moduleDataDir / InitialDataVert).string();
+    auto initialDataFrag = (moduleDataDir / InitialDataFrag).string();
+    automataInitProgram.reset(Shader::CreateProgram(initialDataVert, initialDataFrag));
     if (!automataInitProgram) {
         LOGE << "Failed to init shader program for initial state of cellular automata";
         return false;
@@ -140,7 +151,9 @@ bool LifeContext::Init(int newWidth, int newHeight, int texSize) {
     }
 
     // Screen renderer
-    screenProgram.reset(Shader::CreateProgram(ScreenRendererVert, ScreenRendererFrag));
+    auto screenRendererVert = (moduleDataDir / ScreenRendererVert).string();
+    auto screenRendererFrag = (moduleDataDir / ScreenRendererFrag).string();
+    screenProgram.reset(Shader::CreateProgram(screenRendererVert, screenRendererFrag));
     if (!screenProgram) {
         LOGE << "Failed to init shader program for screen rendering";
         return false;

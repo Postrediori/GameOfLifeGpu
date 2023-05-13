@@ -4,7 +4,7 @@ class LifeContext {
 public:
     LifeContext(GLFWwindow* w);
 
-    bool Init(int width, int height, int textureSize);
+    bool Init(int argc, const char* argv[], int width, int height, int textureSize);
 
     void Display();
     void Update();

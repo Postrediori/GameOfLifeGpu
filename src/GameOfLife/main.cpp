@@ -20,7 +20,7 @@ static const std::string Title = "Conway's Game of Life";
  * Main program
  ****************************************************************************/
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, const char* argv[]) {
     plog::ConsoleAppender<plog::LogFormatter> logger;
 #ifdef NDEBUG
     plog::init(plog::info, &logger);
@@ -38,7 +38,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
     // Setup program objects
     LifeContext context(glfwWrapper.GetWindow());
-    if (!context.Init(Width, Height, TextureSize)) {
+    if (!context.Init(argc, argv, Width, Height, TextureSize)) {
         LOGE << "Initialization failed";
         return EXIT_FAILURE;
     }
