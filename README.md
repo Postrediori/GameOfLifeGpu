@@ -93,7 +93,7 @@ make
 make install
 ```
 
-After the successful build the binary `GameOfLifeGpu` will end up in `<source dir>/bundle/GameOfLifeGpu/`.
+After the successful build the binary `GameOfLifeGpu` will end up in `<source dir>/bundle`.
 
 
 ## Building for macOS
@@ -120,7 +120,7 @@ make
 make install
 ```
 
-An `GameOfLifeGpu` application bundle will now be present under `<Source directory>/bundle/GameOfLifeGpu`.
+An `GameOfLifeGpu` application bundle will now be present under `<Source directory>/bundle`.
 
 
 ## Controls

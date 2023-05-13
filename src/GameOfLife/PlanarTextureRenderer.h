@@ -12,7 +12,7 @@ public:
 
     void SetTexture(GLuint t);
     void SetTime(double t);
-    void SetMvp(hmm_mat4 mvp);
+    void SetMvp(HMM_Mat4 mvp);
 
 private:
     int width = 0, height = 0;
@@ -26,5 +26,5 @@ private:
     GraphicsUtils::unique_vertex_array vao;
     GraphicsUtils::unique_buffer vbo, indVbo;
 
-    hmm_mat4 mvp;
+    HMM_Mat4 mvp;
 };

@@ -3,7 +3,7 @@
 #include "GraphicsResource.h"
 #include "PlanarTextureRenderer.h"
 
-static const hmm_vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
+static const HMM_Vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
 
 static const std::vector<float> PlaneVertices = {
     -1.0f, -1.0f, 0.f, 0.f,
@@ -25,7 +25,7 @@ bool PlanarTextureRenderer::Init(GLuint p) {
     uTex = glGetUniformLocation(program, "tex"); LOGOPENGLERROR();
     uTime = glGetUniformLocation(program, "time"); LOGOPENGLERROR();
 
-    mvp = HMM_Orthographic(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
+    mvp = HMM_Orthographic_RH_NO(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
 
     // Init VAO
     glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
@@ -83,7 +83,7 @@ void PlanarTextureRenderer::SetTime(double t) {
     time = t;
 }
 
-void PlanarTextureRenderer::SetMvp(hmm_mat4 newMvp) {
+void PlanarTextureRenderer::SetMvp(HMM_Mat4 newMvp) {
     mvp = newMvp;
 }
 

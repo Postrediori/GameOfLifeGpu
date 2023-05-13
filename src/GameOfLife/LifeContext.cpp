@@ -17,7 +17,7 @@ static const std::string InitialDataFrag = "data/life-init.frag";
 static const std::string ScreenRendererVert = "data/screen-plane.vert";
 static const std::string ScreenRendererFrag = "data/screen-plane.frag";
 
-static const hmm_vec4 ScreenArea = { -1.0, 1.0, -1.0, 1.0 };
+static const HMM_Vec4 ScreenArea = { -1.0, 1.0, -1.0, 1.0 };
 
 static const std::vector<std::tuple<std::string, int>> ModelSizes = {
     {"128", 128},
@@ -230,7 +230,7 @@ void LifeContext::Reshape(int newWidth, int newHeight) {
     double widthWithoutUi = width - UiWidth;
     double newScale = 2.0 / (double)(widthWithoutUi);
     double newXMin = ScreenArea.X - UiWidth * newScale;
-    hmm_mat4 screenMvp = HMM_Orthographic(newXMin, ScreenArea.Y, ScreenArea.Z, ScreenArea.W, 1.f, -1.f);
+    HMM_Mat4 screenMvp = HMM_Orthographic_RH_NO(newXMin, ScreenArea.Y, ScreenArea.Z, ScreenArea.W, 1.f, -1.f);
 
     screenRenderer.Resize(widthWithoutUi, height);
     screenRenderer.SetMvp(screenMvp);
@@ -431,13 +431,13 @@ void LifeContext::MouseDown(int x, int y) {
         float s = (float)cx / (float)size;
         float t = 1.f - (float)cy / (float)size;
 
-        this->SetActivity(hmm_vec2{ s, t });
+        this->SetActivity(HMM_Vec2{ s, t });
 
         LOGI << "Set Activity at [" << s << "," << t << "]";
     }
 }
 
-void LifeContext::SetActivity(hmm_vec2 pos) {
+void LifeContext::SetActivity(HMM_Vec2 pos) {
     needSetActivity = true;
     activityPos = pos;
 }

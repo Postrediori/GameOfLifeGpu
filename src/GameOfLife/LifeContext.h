@@ -12,7 +12,7 @@ public:
     void NeedDataInit() { needDataInit = true; }
 
     void MouseDown(int x, int y);
-    void SetActivity(hmm_vec2 pos);
+    void SetActivity(HMM_Vec2 pos);
 
     void Reshape(int width, int height);
     void Keyboard(int key, int /*scancode*/, int action, int /*mods*/);
@@ -73,5 +73,5 @@ private:
         CellularAutomata::FirstGenerationType::Empty };
 
     bool needSetActivity = false;
-    hmm_vec2 activityPos = { 0 };
+    HMM_Vec2 activityPos = { 0 };
 };
