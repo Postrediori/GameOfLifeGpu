@@ -34,7 +34,7 @@ bool PlanarTextureRenderer::Init(GLuint p) {
         return false;
     }
 
-    glBindVertexArray(vao.get()); LOGOPENGLERROR();
+    glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 
     // Init VBO
     glGenBuffers(1, vbo.put()); LOGOPENGLERROR();
@@ -43,8 +43,8 @@ bool PlanarTextureRenderer::Init(GLuint p) {
         return false;
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * PlaneVertices.size(),
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(vbo)); LOGOPENGLERROR();
+    glBufferData(GL_ARRAY_BUFFER, sizeof(PlaneVertices[0]) * PlaneVertices.size(),
         PlaneVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init indices VBO
@@ -54,8 +54,8 @@ bool PlanarTextureRenderer::Init(GLuint p) {
         return false;
     }
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo.get()); LOGOPENGLERROR();
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * PlaneIndices.size(), PlaneIndices.data(),
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(indVbo)); LOGOPENGLERROR();
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(PlaneIndices[0]) * PlaneIndices.size(), PlaneIndices.data(),
         GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Setup VAO
@@ -98,7 +98,7 @@ void PlanarTextureRenderer::AdjustViewport() {
 
 void PlanarTextureRenderer::Render() {
     glUseProgram(program); LOGOPENGLERROR();
-    glBindVertexArray(vao.get()); LOGOPENGLERROR();
+    glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();

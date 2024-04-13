@@ -90,8 +90,8 @@ bool LifeContext::InitTextures(int newSize) {
         return false;
     }
 
-    InitTexture(currentGenerationTex.get(), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
-    InitTexture(nextGenerationTex.get(), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
+    InitTexture(static_cast<GLuint>(currentGenerationTex), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
+    InitTexture(static_cast<GLuint>(nextGenerationTex), GL_RED, (GLsizei)textureSize, GL_NEAREST, GL_REPEAT);
 
     return true;
 }
@@ -108,6 +108,9 @@ bool LifeContext::Init(int /*argc*/, const char* argv[], int newWidth, int newHe
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
+    LOGI << "GLFW Version : " << GLFW_VERSION_MAJOR << "." << GLFW_VERSION_MINOR << "." << GLFW_VERSION_REVISION;
+    LOGI << "ImGui Version : " << IMGUI_VERSION << " (" << IMGUI_VERSION_NUM << ")";
+    
     glfwSetWindowUserPointer(this->window, static_cast<void *>(this));
 
     // Init default rules
@@ -123,13 +126,13 @@ bool LifeContext::Init(int /*argc*/, const char* argv[], int newWidth, int newHe
         return false;
     }
 
-    uRulesBirth = glGetUniformLocation(automataProgram.get(), "rules.birth"); LOGOPENGLERROR();
-    uRulesSurvive = glGetUniformLocation(automataProgram.get(), "rules.survive"); LOGOPENGLERROR();
+    uRulesBirth = glGetUniformLocation(static_cast<GLuint>(automataProgram), "rules.birth"); LOGOPENGLERROR();
+    uRulesSurvive = glGetUniformLocation(static_cast<GLuint>(automataProgram), "rules.survive"); LOGOPENGLERROR();
 
-    uNeedSetActivity = glGetUniformLocation(automataProgram.get(), "needSetActivity"); LOGOPENGLERROR();
-    uActivityPos = glGetUniformLocation(automataProgram.get(), "activityPos"); LOGOPENGLERROR();
+    uNeedSetActivity = glGetUniformLocation(static_cast<GLuint>(automataProgram), "needSetActivity"); LOGOPENGLERROR();
+    uActivityPos = glGetUniformLocation(static_cast<GLuint>(automataProgram), "activityPos"); LOGOPENGLERROR();
 
-    if (!automataRenderer.Init(automataProgram.get())) {
+    if (!automataRenderer.Init(static_cast<GLuint>(automataProgram))) {
         LOGE << "Failed to init texture renderer for frame buffer";
         return false;
     }
@@ -143,9 +146,9 @@ bool LifeContext::Init(int /*argc*/, const char* argv[], int newWidth, int newHe
         return false;
     }
 
-    uInitType = glGetUniformLocation(automataInitProgram.get(), "initType"); LOGOPENGLERROR();
+    uInitType = glGetUniformLocation(static_cast<GLuint>(automataInitProgram), "initType"); LOGOPENGLERROR();
 
-    if (!automataInitialRenderer.Init(automataInitProgram.get())) {
+    if (!automataInitialRenderer.Init(static_cast<GLuint>(automataInitProgram))) {
         LOGE << "Failed to setup initial cellular automata data creator";
         return false;
     }
@@ -159,7 +162,7 @@ bool LifeContext::Init(int /*argc*/, const char* argv[], int newWidth, int newHe
         return false;
     }
 
-    if (!screenRenderer.Init(screenProgram.get())) {
+    if (!screenRenderer.Init(static_cast<GLuint>(screenProgram))) {
         LOGE << "Failed to init processed texture renderer";
         return false;
     }
@@ -192,12 +195,12 @@ void LifeContext::InitFirstGeneration() {
 
     automataInitialRenderer.SetTime(glfwGetTime());
 
-    glUseProgram(automataInitProgram.get()); LOGOPENGLERROR();
+    glUseProgram(static_cast<GLuint>(automataInitProgram)); LOGOPENGLERROR();
     glUniform1i(uInitType, static_cast<int>(firstGenerationType)); LOGOPENGLERROR();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
+    glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(frameBuffer)); LOGOPENGLERROR();
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex.get(), 0); LOGOPENGLERROR();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, static_cast<GLuint>(nextGenerationTex), 0); LOGOPENGLERROR();
 
     automataInitialRenderer.AdjustViewport();
     automataInitialRenderer.Render();
@@ -255,16 +258,13 @@ void LifeContext::ReleaseTextures() {
 }
 
 void LifeContext::Update() {
-    static int gensCounter = 0;
-
-    static double lastTime = 0.0;
     double currentTime = glfwGetTime();
 
     // Update FPS counter every second
-    if (currentTime - lastTime > 1.0) {
+    if (currentTime - lastFpsTime > 1.0) {
         gensPerSec = gensCounter;
         fps = ImGui::GetIO().Framerate;
-        lastTime = currentTime;
+        lastFpsTime = currentTime;
         gensCounter = 0;
     }
 
@@ -290,9 +290,9 @@ void LifeContext::Update() {
 }
 
 void LifeContext::CalcNextGeneration() {
-    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
+    glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(frameBuffer)); LOGOPENGLERROR();
 
-    glUseProgram(automataProgram.get()); LOGOPENGLERROR();
+    glUseProgram(static_cast<GLuint>(automataProgram)); LOGOPENGLERROR();
     glUniform1i(uRulesBirth, currentRules.birth); LOGOPENGLERROR();
     glUniform1i(uRulesSurvive, currentRules.survive); LOGOPENGLERROR();
 
@@ -318,13 +318,13 @@ void LifeContext::SwapGenerations() {
     nextGenerationTex.swap(currentGenerationTex);
 
     // Swap IDs in the renderer objects
-    automataRenderer.SetTexture(currentGenerationTex.get());
+    automataRenderer.SetTexture(static_cast<GLuint>(currentGenerationTex));
 
-    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.get()); LOGOPENGLERROR();
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, nextGenerationTex.get(), 0); LOGOPENGLERROR();
+    glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(frameBuffer)); LOGOPENGLERROR();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, static_cast<GLuint>(nextGenerationTex), 0); LOGOPENGLERROR();
     glBindFramebuffer(GL_FRAMEBUFFER, 0); LOGOPENGLERROR();
 
-    screenRenderer.SetTexture(nextGenerationTex.get());
+    screenRenderer.SetTexture(static_cast<GLuint>(nextGenerationTex));
 }
 
 void LifeContext::Display() {
@@ -456,31 +456,6 @@ void LifeContext::SetActivity(HMM_Vec2 pos) {
 }
 
 void LifeContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/) {
-    static struct {
-        bool fullscreen{ false };
-        int savedXPos{ 0 }, savedYPos{ 0 };
-        int savedWidth{ 0 }, savedHeight{ 0 };
-
-        void ToggleFullscreen(GLFWwindow* window) {
-            fullscreen = !fullscreen;
-
-            if (fullscreen) {
-                glfwGetWindowPos(window, &savedXPos, &savedYPos);
-                glfwGetWindowSize(window, &savedWidth, &savedHeight);
-
-                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-                glfwSetWindowMonitor(window, monitor, 0, 0,
-                    mode->width, mode->height, mode->refreshRate);
-            }
-            else {
-                glfwSetWindowMonitor(window, nullptr, savedXPos, savedYPos,
-                    savedWidth, savedHeight, GLFW_DONT_CARE);
-            }
-
-        }
-    } gScreenState;
-
     if (action == GLFW_PRESS) {
         switch (key) {
         case GLFW_KEY_ESCAPE:
@@ -488,7 +463,21 @@ void LifeContext::Keyboard(int key, int /*scancode*/, int action, int /*mods*/) 
             break;
 
         case GLFW_KEY_F1:
-            gScreenState.ToggleFullscreen(window);
+            isFullscreen = !isFullscreen;
+
+            if (isFullscreen) {
+                glfwGetWindowPos(window, &savedWindowPos.X, &savedWindowPos.Y);
+                glfwGetWindowSize(window, &savedWindowPos.Width, &savedWindowPos.Height);
+
+                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+                glfwSetWindowMonitor(window, monitor, 0, 0,
+                    mode->width, mode->height, mode->refreshRate);
+            }
+            else {
+                glfwSetWindowMonitor(window, nullptr, savedWindowPos.X, savedWindowPos.Y,
+                    savedWindowPos.Width, savedWindowPos.Height, GLFW_DONT_CARE);
+            }
             break;
 
         case GLFW_KEY_SPACE:
@@ -523,21 +512,21 @@ void LifeContext::Mouse(int button, int action, int /*mods*/) {
 }
 
 void LifeContext::ReshapeCallback(GLFWwindow* window, int width, int height) {
-    LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
+    auto context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
     assert(context);
 
     context->Reshape(width, height);
 }
 
 void LifeContext::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
+    auto context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
     assert(context);
 
     context->Keyboard(key, scancode, action, mods);
 }
 
 void LifeContext::MouseCallback(GLFWwindow* window, int button, int action, int mods) {
-    LifeContext* context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
+    auto context = static_cast<LifeContext *>(glfwGetWindowUserPointer(window));
     assert(context);
 
     context->Mouse(button, action, mods);

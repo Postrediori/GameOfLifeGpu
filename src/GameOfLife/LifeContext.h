@@ -1,5 +1,10 @@
 #pragma once
 
+struct WindowDimensions {
+    int X, Y;
+    int Width, Height;
+};
+
 class LifeContext {
 public:
     LifeContext(GLFWwindow* w);
@@ -41,7 +46,9 @@ private:
 private:
     GLFWwindow* window = nullptr;
 
+    bool isFullscreen = false;
     int width = 0, height = 0;
+    WindowDimensions savedWindowPos = { 0, 0, 0, 0 };
 
     int generationCounter = 0;
     float fps = 0.0;
@@ -74,4 +81,7 @@ private:
 
     bool needSetActivity = false;
     HMM_Vec2 activityPos = { 0 };
+
+    int gensCounter = 0;
+    double lastFpsTime = 0.0;
 };
